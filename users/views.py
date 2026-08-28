@@ -34,10 +34,18 @@ class UserViewSet(viewsets.ModelViewSet):
     def register(self, request):
         serializer = UserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        password = serializer.validated_data.get('password')
+        if not password:
+            return Response(
+                {'error': 'Password is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         user = User.objects.create_user(
             username=serializer.validated_data['username'],
-            email=serializer.validated_data['email'],
-            password=serializer.validated_data['password']
+            email=serializer.validated_data.get('email', ''),
+            password=password
         )
         return Response({
             'id': user.id,
