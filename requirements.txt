@@ -5,7 +5,7 @@ djangorestframework-simplejwt==5.3
 python-dotenv==1.0
 Pillow==11.3.0
 openpyxl==3.1
-django-filter==23.3
+django-filter==24.4
 django-extensions==3.2
 gunicorn==21.2
 psycopg2-binary==2.9.9
