@@ -18,14 +18,24 @@ git commit -m "Prepare for Render deployment"
 git push origin main
 ```
 
-### 2. Create PostgreSQL Database on Render
+### 2. Database Setup (Neon or Render PostgreSQL)
 
+#### Option A: Using Neon (Recommended - Free Tier)
+1. Go to [Neon Console](https://console.neon.tech)
+2. Create a new project or use existing
+3. Copy your connection string:
+   ```
+   postgresql://user:password@host/database?sslmode=require&channel_binding=require
+   ```
+4. See [NEON_SETUP.md](NEON_SETUP.md) for detailed instructions
+
+#### Option B: Using Render PostgreSQL
 1. Go to [Render Dashboard](https://dashboard.render.com)
 2. Click "New" → "PostgreSQL"
 3. Name it: `gia-postgresql`
 4. Choose appropriate plan and region
 5. Click "Create Database"
-6. Copy the connection string (you'll need it)
+6. Copy the connection string
 
 ### 3. Create Web Service on Render
 

@@ -2,7 +2,7 @@ services:
   - type: web
     name: gia-hajj-api
     env: python
-    region: oregon
+    region: us-east-2
     plan: standard
     buildCommand: >
       pip install -r requirements.txt &&
@@ -21,12 +21,4 @@ services:
       - key: CORS_ALLOWED_ORIGINS
         value: "https://kanb-seven.vercel.app,https://iga-blush.vercel.app"
       - key: DATABASE_URL
-        fromDatabase:
-          name: gia-postgresql
-          property: connectionString
-  - type: pserv
-    name: gia-postgresql
-    ipAllowList: []
-    plan: standard
-    region: oregon
-    postgresVersion: "15"
+        sync: false
