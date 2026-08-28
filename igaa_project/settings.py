@@ -17,6 +17,18 @@ ALLOWED_HOSTS = [
     'igaa.onrender.com',
 ] + (os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else [])
 
+# CSRF and Security Settings
+CSRF_TRUSTED_ORIGINS = [
+    'https://igaa.onrender.com',
+    'http://localhost:8000',
+]
+
+# Session and Cookie Settings for Production
+SESSION_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = True
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
