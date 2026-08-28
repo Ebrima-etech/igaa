@@ -128,7 +128,17 @@ SIMPLE_JWT = {
     'SIGNING_KEY': os.getenv('JWT_SECRET', SECRET_KEY),
 }
 
-CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,https://kanb-seven.vercel.app,https://iga-blush.vercel.app').split(',')
+CORS_ALLOWED_ORIGINS = [
+    # Local development
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:3002',
+    'http://localhost:3003',
+    # Vercel production frontends
+    'https://iga-blush.vercel.app',      # GIA Dashboard
+    'https://kanb-seven.vercel.app',     # Placeholder domain (keep for reference)
+    'https://bank-gia.vercel.app',       # Bank Portal
+] + (os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [])
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
