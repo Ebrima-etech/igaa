@@ -15,16 +15,31 @@ class UserSerializer(serializers.ModelSerializer):
 class UserRoleSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.IntegerField(write_only=True)
+    bank_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
 
     class Meta:
         model = UserRole
-        fields = ['id', 'user', 'user_id', 'role', 'bank', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'user_id', 'role', 'bank', 'bank_id', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['created_at', 'updated_at']
+        extra_kwargs = {
+            'bank': {'required': False, 'allow_null': True}
+        }
 
     def create(self, validated_data):
         user_id = validated_data.pop('user_id')
+        bank_id = validated_data.pop('bank_id', None)
+
         user = User.objects.get(id=user_id)
         validated_data['user'] = user
+
+        if bank_id:
+            from banks.models import Bank
+            try:
+                bank = Bank.objects.get(id=bank_id)
+                validated_data['bank'] = bank
+            except Bank.DoesNotExist:
+                raise serializers.ValidationError({'bank_id': 'Bank not found'})
+
         return super().create(validated_data)
 
 
