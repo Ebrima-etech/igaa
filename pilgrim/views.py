@@ -2,8 +2,11 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+import logging
 from .models import Pilgrim, PilgrimDocument
 from .serializers import PilgrimSerializer, PilgrimListSerializer, PilgrimDocumentSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class PilgrimViewSet(viewsets.ModelViewSet):
@@ -17,6 +20,17 @@ class PilgrimViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return PilgrimListSerializer
         return PilgrimSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            logger.info(f"Pilgrim create request data: {request.data}")
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error creating pilgrim: {type(e).__name__}: {str(e)}", exc_info=True)
+            return Response(
+                {'error': f'Failed to create pilgrim: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False, methods=['get'])
     def search(self, request):
