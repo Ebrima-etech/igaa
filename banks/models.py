@@ -4,10 +4,10 @@ import uuid
 
 class Bank(models.Model):
     name = models.CharField(max_length=100, unique=True, db_index=True)
-    code = models.CharField(max_length=10, unique=True)
-    country = models.CharField(max_length=100)
-    contact_email = models.EmailField()
-    contact_phone = models.CharField(max_length=20)
+    code = models.CharField(max_length=10, unique=True, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    contact_email = models.EmailField(blank=True, null=True)
+    contact_phone = models.CharField(max_length=20, blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
