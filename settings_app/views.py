@@ -1,0 +1,244 @@
+# settings_app/views.py
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+import logging
+
+from .models import CurrencySettings, CurrencyRate
+from .serializers import CurrencySettingsSerializer
+
+logger = logging.getLogger(__name__)
+
+
+class CurrencySettingsView(APIView):
+    """
+    API endpoint for managing currency settings and rates.
+
+    GET: Retrieve user's currency settings
+    POST: Save/update user's currency settings
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        Save manual currency rates and settings.
+
+        Request body:
+        {
+            "default_currency": "USD",
+            "base_currency": "GMD",
+            "mode": "manual",
+            "currencies": [
+                {"code": "GMD", "name": "Gambian Dalasi", "symbol": "D", "rate": 1.0},
+                {"code": "USD", "name": "US Dollar", "symbol": "$", "rate": 0.017}
+            ]
+        }
+        """
+        try:
+            data = request.data
+
+            # Validate required fields exist
+            if not data.get('default_currency'):
+                return Response(
+                    {'detail': 'default_currency is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not data.get('base_currency'):
+                return Response(
+                    {'detail': 'base_currency is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not data.get('currencies'):
+                return Response(
+                    {'detail': 'currencies is required and must be a non-empty array'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not isinstance(data['currencies'], list):
+                return Response(
+                    {'detail': 'currencies must be an array'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if len(data['currencies']) == 0:
+                return Response(
+                    {'detail': 'At least one currency is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Validate currency codes
+            valid_codes = {'GMD', 'USD', 'GBP', 'EUR'}
+            for idx, currency in enumerate(data['currencies']):
+                code = currency.get('code')
+
+                if not code:
+                    return Response(
+                        {'detail': f'Currency at index {idx} is missing code'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if code not in valid_codes:
+                    return Response(
+                        {'detail': f'Invalid currency code: {code}. Valid codes: {sorted(valid_codes)}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if not currency.get('name'):
+                    return Response(
+                        {'detail': f'Currency {code} is missing name'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if not currency.get('symbol'):
+                    return Response(
+                        {'detail': f'Currency {code} is missing symbol'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if 'rate' not in currency:
+                    return Response(
+                        {'detail': f'Currency {code} is missing rate'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                rate = currency.get('rate')
+                if not isinstance(rate, (int, float)):
+                    return Response(
+                        {'detail': f'Rate for {code} must be a number, got {type(rate).__name__}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                if rate < 0:
+                    return Response(
+                        {'detail': f'Rate for {code} must be positive, got {rate}'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            # Use serializer to save with validation
+            serializer = CurrencySettingsSerializer(
+                data=data,
+                context={'request': request}
+            )
+
+            if serializer.is_valid():
+                settings = serializer.save()
+                logger.info(
+                    f'✓ Currency settings saved for user {request.user.username} '
+                    f'(mode: {settings.mode}, rates: {len(settings.currencies.all())})'
+                )
+
+                return Response(
+                    {
+                        'success': True,
+                        'message': 'Currency settings saved successfully',
+                        'data': CurrencySettingsSerializer(
+                            settings,
+                            context={'request': request}
+                        ).data
+                    },
+                    status=status.HTTP_201_CREATED
+                )
+            else:
+                logger.warning(f'Validation error for user {request.user.username}: {serializer.errors}')
+                return Response(
+                    {'detail': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception as e:
+            logger.exception(f'Error saving currency settings for user {request.user.username}: {str(e)}')
+            return Response(
+                {'detail': f'Internal server error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def get(self, request):
+        """
+        Retrieve user's current currency settings.
+
+        Returns the user's saved currency settings or defaults if not yet configured.
+        """
+        try:
+            settings = CurrencySettings.objects.get(user=request.user)
+            serializer = CurrencySettingsSerializer(settings, context={'request': request})
+
+            logger.info(f'Retrieved currency settings for user {request.user.username}')
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except CurrencySettings.DoesNotExist:
+            # Return default settings for new users
+            default_settings = {
+                'default_currency': 'USD',
+                'base_currency': 'GMD',
+                'mode': 'manual',
+                'currencies': [
+                    {'code': 'GMD', 'name': 'Gambian Dalasi', 'symbol': 'D', 'rate': 1.0},
+                    {'code': 'USD', 'name': 'US Dollar', 'symbol': '$', 'rate': 0.017},
+                    {'code': 'GBP', 'name': 'British Pound', 'symbol': '£', 'rate': 0.013},
+                    {'code': 'EUR', 'name': 'Euro', 'symbol': '€', 'rate': 0.016},
+                ]
+            }
+
+            logger.info(f'No settings found for user {request.user.username}, returning defaults')
+
+            return Response(default_settings, status=status.HTTP_200_OK)
+
+
+class CurrencyRatesListView(APIView):
+    """
+    API endpoint for retrieving formatted currency rates.
+
+    GET: Get all rates for the current user
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Get formatted currency rates for the authenticated user.
+
+        Returns rates in a flat structure for easy consumption.
+        """
+        try:
+            settings = CurrencySettings.objects.get(user=request.user)
+
+            # Format rates as a dictionary
+            rates = {}
+            for rate in settings.currencies.all():
+                rates[rate.code] = {
+                    'name': rate.name,
+                    'symbol': rate.symbol,
+                    'rate': float(rate.rate)
+                }
+
+            logger.info(f'Retrieved currency rates for user {request.user.username}')
+
+            return Response(
+                {
+                    'success': True,
+                    'mode': settings.mode,
+                    'base_currency': settings.base_currency,
+                    'default_currency': settings.default_currency,
+                    'rates': rates
+                },
+                status=status.HTTP_200_OK
+            )
+
+        except CurrencySettings.DoesNotExist:
+            logger.warning(f'No currency settings found for user {request.user.username}')
+
+            return Response(
+                {
+                    'success': False,
+                    'detail': 'Currency settings not configured',
+                    'message': 'Please configure currency settings first'
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
