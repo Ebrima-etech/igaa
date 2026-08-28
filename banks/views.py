@@ -13,10 +13,16 @@ from payment.models import Payment
 from pilgrim.models import Pilgrim
 
 
-class BankViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Bank.objects.filter(is_active=True)
+class BankViewSet(viewsets.ModelViewSet):
+    queryset = Bank.objects.all()
     serializer_class = BankSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = Bank.objects.all()
+        if not self.request.user.is_staff:
+            queryset = queryset.filter(is_active=True)
+        return queryset
 
 
 class BankAccountViewSet(viewsets.ModelViewSet):

@@ -30,6 +30,21 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response({'id': user.id, 'username': user.username, 'email': user.email})
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def register(self, request):
+        serializer = UserSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = User.objects.create_user(
+            username=serializer.validated_data['username'],
+            email=serializer.validated_data['email'],
+            password=serializer.validated_data['password']
+        )
+        return Response({
+            'id': user.id,
+            'username': user.username,
+            'email': user.email
+        }, status=status.HTTP_201_CREATED)
+
 
 class UserRoleViewSet(viewsets.ModelViewSet):
     queryset = UserRole.objects.all()
