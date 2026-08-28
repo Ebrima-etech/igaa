@@ -25,8 +25,8 @@ class Pilgrim(models.Model):
     passport_number = models.CharField(max_length=50, unique=True)
     address = models.TextField()
     city = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=20)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
     country = models.CharField(max_length=100)
 
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='registered', db_index=True)
