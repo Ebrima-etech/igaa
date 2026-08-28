@@ -12,10 +12,15 @@ class UserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 
+class BankDisplaySerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+
 class UserRoleSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.IntegerField(write_only=True)
     bank_id = serializers.IntegerField(write_only=True, required=False, allow_null=True)
+    bank = BankDisplaySerializer(read_only=True)
 
     class Meta:
         model = UserRole
