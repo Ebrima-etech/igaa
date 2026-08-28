@@ -35,44 +35,56 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def register(self, request):
-        logger.info(f"Register request data: {request.data}")
-
-        username = request.data.get('username')
-        email = request.data.get('email', '')
-        password = request.data.get('password')
-
-        logger.info(f"Username: {username}, Email: {email}, Password: {'*' * len(password) if password else 'None'}")
-
-        if not username or not password:
-            logger.error("Missing username or password")
-            return Response(
-                {'error': 'Username and password are required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        if User.objects.filter(username=username).exists():
-            logger.error(f"Username {username} already exists")
-            return Response(
-                {'error': 'Username already exists'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
+            logger.info(f"Register request method: {request.method}")
+            logger.info(f"Register request content-type: {request.content_type}")
+            logger.info(f"Register request data: {request.data}")
+            logger.info(f"Register request POST: {request.POST}")
+
+            # Get data from request, try both data and POST
+            data = request.data if hasattr(request, 'data') else request.POST
+            username = data.get('username', '').strip()
+            email = data.get('email', '').strip()
+            password = data.get('password', '')
+
+            logger.info(f"Username: '{username}', Email: '{email}', Password: {'*' * len(password) if password else 'None'}")
+
+            if not username:
+                logger.error("Missing username")
+                return Response(
+                    {'error': 'Username is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not password:
+                logger.error("Missing password")
+                return Response(
+                    {'error': 'Password is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if User.objects.filter(username=username).exists():
+                logger.error(f"Username '{username}' already exists")
+                return Response(
+                    {'error': 'Username already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             user = User.objects.create_user(
                 username=username,
                 email=email,
                 password=password
             )
-            logger.info(f"User {username} created successfully")
+            logger.info(f"User '{username}' created successfully")
             return Response({
                 'id': user.id,
                 'username': user.username,
                 'email': user.email
             }, status=status.HTTP_201_CREATED)
         except Exception as e:
-            logger.error(f"Error creating user: {str(e)}")
+            logger.error(f"Exception in register: {type(e).__name__}: {str(e)}", exc_info=True)
             return Response(
-                {'error': f'Failed to create user: {str(e)}'},
+                {'error': f'Error: {str(e)}'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
