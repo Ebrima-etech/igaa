@@ -1,4 +1,5 @@
 import os
+from django.http import HttpResponse
 
 class SimpleCORSMiddleware:
     """Simple CORS middleware to handle preflight requests."""
@@ -13,7 +14,8 @@ class SimpleCORSMiddleware:
 
         # Handle preflight requests
         if request.method == 'OPTIONS':
-            response = self.get_response(request)
+            response = HttpResponse()
+            response.status_code = 200
         else:
             response = self.get_response(request)
 
