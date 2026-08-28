@@ -32,26 +32,38 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def register(self, request):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        username = request.data.get('username')
+        email = request.data.get('email', '')
+        password = request.data.get('password')
 
-        password = serializer.validated_data.get('password')
-        if not password:
+        if not username or not password:
             return Response(
-                {'error': 'Password is required'},
+                {'error': 'Username and password are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user = User.objects.create_user(
-            username=serializer.validated_data['username'],
-            email=serializer.validated_data.get('email', ''),
-            password=password
-        )
-        return Response({
-            'id': user.id,
-            'username': user.username,
-            'email': user.email
-        }, status=status.HTTP_201_CREATED)
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {'error': 'Username already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            return Response({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class UserRoleViewSet(viewsets.ModelViewSet):
