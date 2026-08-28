@@ -136,8 +136,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3003',
     # Vercel production frontends
     'https://iga-blush.vercel.app',      # GIA Dashboard
-    'https://kanb-seven.vercel.app',     # Placeholder domain (keep for reference)
-    'https://bank-gia.vercel.app',       # Bank Portal
+    'https://kanb-seven.vercel.app',     # Bank Portal
 ] + (os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if os.getenv('CORS_ALLOWED_ORIGINS') else [])
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
