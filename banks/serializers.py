@@ -7,6 +7,12 @@ class BankSerializer(serializers.ModelSerializer):
         model = Bank
         fields = ['id', 'name', 'code', 'country', 'contact_email', 'contact_phone', 'is_active', 'created_at']
         read_only_fields = ['created_at']
+        extra_kwargs = {
+            'code': {'required': False, 'allow_blank': True},
+            'country': {'required': False, 'allow_blank': True},
+            'contact_email': {'required': False, 'allow_blank': True},
+            'contact_phone': {'required': False, 'allow_blank': True},
+        }
 
 
 class BankAccountSerializer(serializers.ModelSerializer):
