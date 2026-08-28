@@ -79,17 +79,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'igaa_project.wsgi.application'
 
-if os.getenv('DATABASE_URL'):
-    DATABASES = {
-        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'), conn_max_age=600)
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-        }
-    }
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://neondb_owner:npg_UZ1TYhP5Gnqp@ep-dawn-butterfly-a55qwb1z-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require')
+
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
