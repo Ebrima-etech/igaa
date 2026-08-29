@@ -83,7 +83,7 @@ class CurrencySettingsSerializer(serializers.ModelSerializer):
         currencies_data = validated_data.pop('currencies', [])
         user = self.context['request'].user
 
-        # Get or create settings
+        # Get or create settings (without currencies data)
         settings, created = CurrencySettings.objects.get_or_create(
             user=user,
             defaults=validated_data
