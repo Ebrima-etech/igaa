@@ -50,9 +50,9 @@ class PaymentMethodViewSet(viewsets.ModelViewSet):
 class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
     serializer_class = BankPaymentSubmissionSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['bank', 'status', 'submission_method']
-    search_fields = ['reference_number', 'pilgrim_id']
-    ordering_fields = ['-submitted_at']
+    filterset_fields = ['bank', 'status', 'submission_method', 'pilgrim']
+    search_fields = ['reference_number', 'pilgrim_id', 'pilgrim__registration_id']
+    ordering_fields = ['-submitted_at', 'amount', 'status']
 
     def get_queryset(self):
         user = self.request.user
