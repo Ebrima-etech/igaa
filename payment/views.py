@@ -8,10 +8,12 @@ from .serializers import PaymentSerializer, PaymentListSerializer, TransactionSe
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
+    queryset = Payment.objects.all()
     permission_classes = [IsAuthenticated]
     filterset_fields = ['status', 'bank', 'pilgrim']
     search_fields = ['reference_number', 'pilgrim__email', 'pilgrim__registration_id']
     ordering_fields = ['-created_at', 'amount', 'status']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         user = self.request.user
