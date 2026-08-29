@@ -3,6 +3,16 @@ from .models import Bank, BankAccount, BankPaymentSubmission, PaymentMethod
 
 
 class BankSerializer(serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+
+    def get_logo(self, obj):
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        return None
+
     class Meta:
         model = Bank
         fields = ['id', 'name', 'code', 'country', 'contact_email', 'contact_phone', 'logo', 'is_active', 'created_at']
@@ -12,11 +22,20 @@ class BankSerializer(serializers.ModelSerializer):
             'country': {'required': False, 'allow_blank': True},
             'contact_email': {'required': False, 'allow_blank': True},
             'contact_phone': {'required': False, 'allow_blank': True},
-            'logo': {'required': False, 'allow_null': True},
         }
 
 
 class BankDisplaySerializer(serializers.ModelSerializer):
+    logo = serializers.SerializerMethodField()
+
+    def get_logo(self, obj):
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        return None
+
     class Meta:
         model = Bank
         fields = ['id', 'name', 'logo', 'is_active']
