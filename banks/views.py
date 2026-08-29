@@ -128,6 +128,75 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
             )
 
     @action(detail=False, methods=['post'])
+    def current_submission(self, request):
+        """Submit payment for existing pilgrim (current deposit)"""
+        user = request.user
+        bank = user.role.bank if hasattr(user, 'role') else None
+
+        if not bank:
+            return Response(
+                {'error': 'User is not associated with a bank'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Extract required fields
+        pilgrim_id = request.data.get('pilgrim_id')
+        amount = request.data.get('amount')
+        reference_number = request.data.get('reference_number')
+        payment_date = request.data.get('payment_date')
+        description = request.data.get('description', '')
+        payer_name = request.data.get('payer_name')
+        payer_contact = request.data.get('payer_contact', '')
+        payer_relationship = request.data.get('payer_relationship', '')
+
+        # Validate required fields
+        if not all([pilgrim_id, amount, reference_number, payment_date, payer_name]):
+            return Response(
+                {'error': 'Missing required fields: pilgrim_id, amount, reference_number, payment_date, payer_name'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            # Get existing pilgrim
+            pilgrim = Pilgrim.objects.get(registration_id=pilgrim_id)
+
+            # Create bank payment submission for existing pilgrim
+            submission = BankPaymentSubmission.objects.create(
+                bank=bank,
+                pilgrim_id=pilgrim.id,
+                amount=float(amount),
+                reference_number=reference_number,
+                payment_date=payment_date,
+                description=description,
+                submission_method='manual_form',
+                submitted_by_user=user.username,
+                status='verified',
+                # Store pilgrim information for reference
+                pilgrim_first_name=pilgrim.first_name,
+                pilgrim_last_name=pilgrim.last_name,
+                pilgrim_gender=pilgrim.gender,
+                pilgrim_phone=pilgrim.phone,
+                pilgrim_email=pilgrim.email or '',
+                # Store payer information
+                payer_name=payer_name,
+                payer_contact=payer_contact,
+                payer_relationship=payer_relationship,
+            )
+
+            result_serializer = BankPaymentSubmissionSerializer(submission)
+            return Response(result_serializer.data, status=status.HTTP_201_CREATED)
+        except Pilgrim.DoesNotExist:
+            return Response(
+                {'error': f'Pilgrim with ID {pilgrim_id} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to create submission: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=False, methods=['post'])
     def bulk_upload(self, request):
         serializer = CSVPaymentUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
