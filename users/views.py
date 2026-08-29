@@ -93,7 +93,7 @@ class UserRoleViewSet(viewsets.ModelViewSet):
     queryset = UserRole.objects.all()
     serializer_class = UserRoleSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['role', 'is_active']
+    filterset_fields = ['user', 'role', 'is_active']
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
