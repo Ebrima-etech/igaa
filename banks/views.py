@@ -77,33 +77,28 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        try:
-            pilgrim = Pilgrim.objects.get(registration_id=serializer.validated_data['pilgrim_id'])
-        except Pilgrim.DoesNotExist:
-            return Response(
-                {'error': 'Pilgrim not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
+        # Create the bank payment submission without requiring existing pilgrim
+        # Pilgrim will be created later from GIA admin dashboard
         submission = BankPaymentSubmission.objects.create(
             bank=bank,
-            pilgrim_id=serializer.validated_data['pilgrim_id'],
+            pilgrim_id='',  # Will be filled when pilgrim is created from GIA
             amount=serializer.validated_data['amount'],
             reference_number=serializer.validated_data['reference_number'],
             payment_date=serializer.validated_data['payment_date'],
             description=serializer.validated_data.get('description', ''),
             submission_method='manual_form',
             submitted_by_user=user.username,
-            status='verified'
-        )
-
-        Payment.objects.create(
-            pilgrim=pilgrim,
-            bank=bank,
-            amount=serializer.validated_data['amount'],
-            reference_number=serializer.validated_data['reference_number'],
-            payment_date=serializer.validated_data['payment_date'],
-            status='confirmed'
+            status='pending',
+            # Store pilgrim information for later reference
+            pilgrim_first_name=serializer.validated_data['pilgrim_first_name'],
+            pilgrim_last_name=serializer.validated_data['pilgrim_last_name'],
+            pilgrim_gender=serializer.validated_data['pilgrim_gender'],
+            pilgrim_phone=serializer.validated_data['pilgrim_phone'],
+            pilgrim_email=serializer.validated_data.get('pilgrim_email', ''),
+            # Store payer information
+            payer_name=serializer.validated_data['payer_name'],
+            payer_contact=serializer.validated_data.get('payer_contact', ''),
+            payer_relationship=serializer.validated_data.get('payer_relationship', ''),
         )
 
         result_serializer = BankPaymentSubmissionSerializer(submission)

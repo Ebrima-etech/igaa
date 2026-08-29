@@ -81,7 +81,7 @@ class ManualPaymentSubmissionSerializer(serializers.Serializer):
     pilgrim_last_name = serializers.CharField(max_length=100)
     pilgrim_gender = serializers.CharField(max_length=1)
     pilgrim_phone = serializers.CharField(max_length=20)
-    pilgrim_email = serializers.EmailField()
+    pilgrim_email = serializers.EmailField(required=False, allow_blank=True)
 
     # Payer Information
     payer_name = serializers.CharField(max_length=100)
