@@ -22,7 +22,7 @@ class PilgrimSerializer(serializers.ModelSerializer):
             'amount_remaining', 'emergency_contact_name', 'emergency_contact_phone',
             'emergency_contact_email', 'documents', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'full_name', 'amount_remaining']
+        read_only_fields = ['registration_id', 'created_at', 'updated_at', 'full_name', 'amount_remaining']
 
     def get_amount_remaining(self, obj):
         return obj.amount_remaining
@@ -35,4 +35,4 @@ class PilgrimListSerializer(serializers.ModelSerializer):
             'id', 'registration_id', 'first_name', 'last_name', 'email', 'phone', 'status',
             'total_amount_due', 'total_amount_paid', 'created_at'
         ]
-        read_only_fields = ['created_at']
+        read_only_fields = ['registration_id', 'created_at']

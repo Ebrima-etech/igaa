@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 
 
 class Pilgrim(models.Model):
@@ -14,7 +15,7 @@ class Pilgrim(models.Model):
         ('F', 'Female'),
     ]
 
-    registration_id = models.CharField(max_length=20, unique=True, db_index=True)
+    registration_id = models.CharField(max_length=20, unique=True, db_index=True, blank=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
@@ -39,6 +40,17 @@ class Pilgrim(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.registration_id:
+            self.registration_id = self.generate_registration_id()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def generate_registration_id():
+        import time
+        timestamp = int(time.time() * 1000) % 1000000
+        return f"GH{timestamp:06d}"
 
     class Meta:
         ordering = ['-created_at']
