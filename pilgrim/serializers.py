@@ -29,15 +29,10 @@ class PilgrimSerializer(serializers.ModelSerializer):
 
 
 class PilgrimListSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
-
-    def get_full_name(self, obj):
-        return obj.full_name
-
     class Meta:
         model = Pilgrim
         fields = [
-            'id', 'registration_id', 'full_name', 'phone', 'status',
+            'id', 'registration_id', 'first_name', 'last_name', 'phone', 'status',
             'total_amount_due', 'total_amount_paid', 'created_at'
         ]
-        read_only_fields = ['registration_id', 'created_at', 'full_name']
+        read_only_fields = ['registration_id', 'created_at']
