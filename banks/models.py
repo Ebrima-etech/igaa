@@ -8,6 +8,7 @@ class Bank(models.Model):
     country = models.CharField(max_length=100, blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
+    logo = models.ImageField(upload_to='bank_logos/%Y/%m/%d/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -5,14 +5,21 @@ from .models import Bank, BankAccount, BankPaymentSubmission, PaymentMethod
 class BankSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bank
-        fields = ['id', 'name', 'code', 'country', 'contact_email', 'contact_phone', 'is_active', 'created_at']
+        fields = ['id', 'name', 'code', 'country', 'contact_email', 'contact_phone', 'logo', 'is_active', 'created_at']
         read_only_fields = ['created_at']
         extra_kwargs = {
             'code': {'required': False, 'allow_blank': True},
             'country': {'required': False, 'allow_blank': True},
             'contact_email': {'required': False, 'allow_blank': True},
             'contact_phone': {'required': False, 'allow_blank': True},
+            'logo': {'required': False, 'allow_null': True},
         }
+
+
+class BankDisplaySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bank
+        fields = ['id', 'name', 'logo', 'is_active']
 
 
 class BankAccountSerializer(serializers.ModelSerializer):
