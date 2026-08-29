@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/v1/', include('banks.urls')),
     path('api/v1/', include('dashboard.urls')),
     path('api/v1/', include('settings_app.urls')),
+    path('api/v1/', include('accommodations.urls')),
 ]
 
 if settings.DEBUG:

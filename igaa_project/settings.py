@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'users',
     'dashboard',
     'settings_app',
+    'accommodations',
 ]
 
 MIDDLEWARE = [
