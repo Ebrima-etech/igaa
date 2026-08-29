@@ -1,13 +1,17 @@
 import os
 from django.http import HttpResponse
+from django.conf import settings
 
 class SimpleCORSMiddleware:
     """Simple CORS middleware to handle preflight requests."""
 
     def __init__(self, get_response):
         self.get_response = get_response
-        cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003')
-        self.allowed_origins = [origin.strip() for origin in cors_origins.split(',')]
+        # Use Django settings CORS_ALLOWED_ORIGINS, fallback to env variable
+        self.allowed_origins = getattr(settings, 'CORS_ALLOWED_ORIGINS', [])
+        if not self.allowed_origins:
+            cors_origins = os.getenv('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003')
+            self.allowed_origins = [origin.strip() for origin in cors_origins.split(',')]
 
     def __call__(self, request):
         origin = request.META.get('HTTP_ORIGIN', '')
