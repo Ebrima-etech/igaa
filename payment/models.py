@@ -10,7 +10,7 @@ class Payment(models.Model):
         ('refunded', 'Refunded'),
     ]
 
-    pilgrim = models.ForeignKey(Pilgrim, on_delete=models.CASCADE, related_name='payments')
+    pilgrim = models.ForeignKey(Pilgrim, on_delete=models.CASCADE, related_name='payments', null=True, blank=True)
     bank = models.ForeignKey('banks.Bank', on_delete=models.SET_NULL, null=True, related_name='payments')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference_number = models.CharField(max_length=100, unique=True, db_index=True)
