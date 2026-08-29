@@ -76,12 +76,24 @@ class BankPaymentSubmissionSerializer(serializers.ModelSerializer):
 
 
 class ManualPaymentSubmissionSerializer(serializers.Serializer):
-    # Pilgrim Information
+    # Pilgrim Information - Basic
     pilgrim_first_name = serializers.CharField(max_length=100)
     pilgrim_last_name = serializers.CharField(max_length=100)
     pilgrim_gender = serializers.CharField(max_length=1)
     pilgrim_phone = serializers.CharField(max_length=20)
     pilgrim_email = serializers.EmailField(required=False, allow_blank=True)
+
+    # Pilgrim Information - Personal
+    pilgrim_date_of_birth = serializers.DateField()
+    pilgrim_nationality = serializers.CharField(max_length=100)
+    pilgrim_passport_number = serializers.CharField(max_length=50)
+
+    # Pilgrim Information - Address
+    pilgrim_address = serializers.CharField()
+    pilgrim_city = serializers.CharField(max_length=100)
+    pilgrim_state = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    pilgrim_postal_code = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    pilgrim_country = serializers.CharField(max_length=100)
 
     # Payer Information
     payer_name = serializers.CharField(max_length=100)

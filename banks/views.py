@@ -77,32 +77,55 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Create the bank payment submission
-        # GIA admin will create pilgrim from this submission, which will create Payment
-        submission = BankPaymentSubmission.objects.create(
-            bank=bank,
-            pilgrim_id='',  # Will be filled when pilgrim is created from GIA
-            amount=serializer.validated_data['amount'],
-            reference_number=serializer.validated_data['reference_number'],
-            payment_date=serializer.validated_data['payment_date'],
-            description=serializer.validated_data.get('description', ''),
-            submission_method='manual_form',
-            submitted_by_user=user.username,
-            status='pending',  # GIA will process this and create Payment when pilgrim is created
-            # Store pilgrim information for later reference
-            pilgrim_first_name=serializer.validated_data['pilgrim_first_name'],
-            pilgrim_last_name=serializer.validated_data['pilgrim_last_name'],
-            pilgrim_gender=serializer.validated_data['pilgrim_gender'],
-            pilgrim_phone=serializer.validated_data['pilgrim_phone'],
-            pilgrim_email=serializer.validated_data.get('pilgrim_email', ''),
-            # Store payer information
-            payer_name=serializer.validated_data['payer_name'],
-            payer_contact=serializer.validated_data.get('payer_contact', ''),
-            payer_relationship=serializer.validated_data.get('payer_relationship', ''),
-        )
+        try:
+            # Step 1: Create the pilgrim directly with complete information
+            pilgrim = Pilgrim.objects.create(
+                first_name=serializer.validated_data['pilgrim_first_name'],
+                last_name=serializer.validated_data['pilgrim_last_name'],
+                gender=serializer.validated_data['pilgrim_gender'],
+                phone=serializer.validated_data['pilgrim_phone'],
+                email=serializer.validated_data.get('pilgrim_email') or None,
+                date_of_birth=serializer.validated_data.get('pilgrim_date_of_birth'),
+                nationality=serializer.validated_data.get('pilgrim_nationality', ''),
+                passport_number=serializer.validated_data.get('pilgrim_passport_number', ''),
+                address=serializer.validated_data.get('pilgrim_address', ''),
+                city=serializer.validated_data.get('pilgrim_city', ''),
+                state=serializer.validated_data.get('pilgrim_state', ''),
+                postal_code=serializer.validated_data.get('pilgrim_postal_code', ''),
+                country=serializer.validated_data.get('pilgrim_country', ''),
+            )
 
-        result_serializer = BankPaymentSubmissionSerializer(submission)
-        return Response(result_serializer.data, status=status.HTTP_201_CREATED)
+            # Step 2: Create the bank payment submission
+            submission = BankPaymentSubmission.objects.create(
+                bank=bank,
+                pilgrim_id=pilgrim.id,
+                amount=serializer.validated_data['amount'],
+                reference_number=serializer.validated_data['reference_number'],
+                payment_date=serializer.validated_data['payment_date'],
+                description=serializer.validated_data.get('description', ''),
+                submission_method='manual_form',
+                submitted_by_user=user.username,
+                status='verified',  # Mark as verified since pilgrim was just created
+                # Store pilgrim information for reference
+                pilgrim_first_name=pilgrim.first_name,
+                pilgrim_last_name=pilgrim.last_name,
+                pilgrim_gender=pilgrim.gender,
+                pilgrim_phone=pilgrim.phone,
+                pilgrim_email=pilgrim.email or '',
+                # Store payer information
+                payer_name=serializer.validated_data['payer_name'],
+                payer_contact=serializer.validated_data.get('payer_contact', ''),
+                payer_relationship=serializer.validated_data.get('payer_relationship', ''),
+            )
+
+            # Step 3: Payment will be created automatically via signal when submission is saved
+            result_serializer = BankPaymentSubmissionSerializer(submission)
+            return Response(result_serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to create pilgrim or submission: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False, methods=['post'])
     def bulk_upload(self, request):
