@@ -77,8 +77,8 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # Create the bank payment submission without requiring existing pilgrim
-        # Pilgrim will be created later from GIA admin dashboard
+        # Create the bank payment submission
+        # Signal will automatically create Payment record in GIA (see signals.py)
         submission = BankPaymentSubmission.objects.create(
             bank=bank,
             pilgrim_id='',  # Will be filled when pilgrim is created from GIA
@@ -88,7 +88,7 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
             description=serializer.validated_data.get('description', ''),
             submission_method='manual_form',
             submitted_by_user=user.username,
-            status='pending',
+            status='verified',  # Triggers signal to create Payment in GIA
             # Store pilgrim information for later reference
             pilgrim_first_name=serializer.validated_data['pilgrim_first_name'],
             pilgrim_last_name=serializer.validated_data['pilgrim_last_name'],
