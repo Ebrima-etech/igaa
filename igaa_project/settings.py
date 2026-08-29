@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'banks',
     'users',
     'dashboard',
+    'settings_app',
 ]
 
 MIDDLEWARE = [
