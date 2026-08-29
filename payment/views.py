@@ -15,12 +15,17 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        print(f"DEBUG: User {user.username}, has_role: {hasattr(user, 'role')}")
         try:
             role = user.role
+            print(f"DEBUG: User role: {role.role}, bank: {role.bank}")
             if role.role in ['bank_admin', 'bank_staff']:
+                print(f"DEBUG: Filtering by bank {role.bank}")
                 return Payment.objects.filter(bank=role.bank)
-        except:
+        except Exception as e:
+            print(f"DEBUG: Exception in get_queryset: {e}")
             pass
+        print(f"DEBUG: Returning all payments")
         return Payment.objects.all()
 
     def get_serializer_class(self):
