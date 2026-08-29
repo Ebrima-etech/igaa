@@ -81,6 +81,34 @@ class PaymentViewSet(viewsets.ModelViewSet):
             })
         return Response(data)
 
+    @action(detail=False, methods=['post'])
+    def link_pilgrim(self, request):
+        reference_number = request.data.get('reference_number')
+        pilgrim_id = request.data.get('pilgrim_id')
+
+        if not reference_number or not pilgrim_id:
+            return Response(
+                {'error': 'reference_number and pilgrim_id are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            payment = Payment.objects.get(reference_number=reference_number)
+            payment.pilgrim_id = pilgrim_id
+            payment.save()
+            serializer = PaymentSerializer(payment)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Payment.DoesNotExist:
+            return Response(
+                {'error': f'Payment with reference_number {reference_number} not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to link pilgrim: {str(e)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
 class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Transaction.objects.all()
