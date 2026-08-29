@@ -78,7 +78,7 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
             )
 
         # Create the bank payment submission
-        # Signal will automatically create Payment record in GIA (see signals.py)
+        # GIA admin will create pilgrim from this submission, which will create Payment
         submission = BankPaymentSubmission.objects.create(
             bank=bank,
             pilgrim_id='',  # Will be filled when pilgrim is created from GIA
@@ -88,7 +88,7 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
             description=serializer.validated_data.get('description', ''),
             submission_method='manual_form',
             submitted_by_user=user.username,
-            status='verified',  # Triggers signal to create Payment in GIA
+            status='pending',  # GIA will process this and create Payment when pilgrim is created
             # Store pilgrim information for later reference
             pilgrim_first_name=serializer.validated_data['pilgrim_first_name'],
             pilgrim_last_name=serializer.validated_data['pilgrim_last_name'],
