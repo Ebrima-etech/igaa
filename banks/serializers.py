@@ -68,13 +68,27 @@ class BankPaymentSubmissionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'bank', 'bank_name', 'pilgrim_id', 'amount', 'reference_number', 'status',
             'submission_method', 'payment_date', 'description', 'error_message',
-            'submitted_by_user', 'submitted_at', 'verified_at'
+            'submitted_by_user', 'submitted_at', 'verified_at',
+            'pilgrim_first_name', 'pilgrim_last_name', 'pilgrim_gender', 'pilgrim_phone', 'pilgrim_email',
+            'payer_name', 'payer_contact', 'payer_relationship', 'created_pilgrim_id'
         ]
-        read_only_fields = ['submitted_at', 'verified_at', 'bank_name']
+        read_only_fields = ['submitted_at', 'verified_at', 'bank_name', 'created_pilgrim_id']
 
 
 class ManualPaymentSubmissionSerializer(serializers.Serializer):
-    pilgrim_id = serializers.CharField(max_length=20)
+    # Pilgrim Information
+    pilgrim_first_name = serializers.CharField(max_length=100)
+    pilgrim_last_name = serializers.CharField(max_length=100)
+    pilgrim_gender = serializers.CharField(max_length=1)
+    pilgrim_phone = serializers.CharField(max_length=20)
+    pilgrim_email = serializers.EmailField()
+
+    # Payer Information
+    payer_name = serializers.CharField(max_length=100)
+    payer_contact = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    payer_relationship = serializers.CharField(max_length=50, required=False, allow_blank=True)
+
+    # Payment Information
     amount = serializers.DecimalField(max_digits=12, decimal_places=2)
     reference_number = serializers.CharField(max_length=100)
     payment_date = serializers.DateField()

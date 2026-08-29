@@ -24,7 +24,8 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = [
             'id', 'pilgrim', 'bank', 'bank_name', 'amount', 'reference_number', 'status',
-            'payment_date', 'description', 'notes', 'sync_record', 'created_at', 'updated_at'
+            'payment_date', 'description', 'notes', 'payer_name', 'payer_contact', 'payer_relationship',
+            'sync_record', 'created_at', 'updated_at'
         ]
         read_only_fields = ['created_at', 'updated_at', 'bank_name']
 
@@ -37,6 +38,7 @@ class PaymentListSerializer(serializers.ModelSerializer):
         model = Payment
         fields = [
             'id', 'reference_number', 'pilgrim', 'pilgrim_name', 'bank', 'bank_name',
-            'amount', 'status', 'payment_date', 'created_at'
+            'amount', 'status', 'payment_date', 'payer_name', 'payer_contact', 'payer_relationship',
+            'created_at'
         ]
         read_only_fields = ['created_at', 'pilgrim_name', 'bank_name']

@@ -52,9 +52,14 @@ class BankPaymentSubmission(models.Model):
         ('api_webhook', 'API Webhook'),
     ]
 
+    GENDER_CHOICES = [
+        ('M', 'Male (Alagie)'),
+        ('F', 'Female (Aja)'),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name='submissions')
-    pilgrim_id = models.CharField(max_length=20, db_index=True)
+    pilgrim_id = models.CharField(max_length=20, db_index=True, blank=True)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference_number = models.CharField(max_length=100, unique=True, db_index=True)
     status = models.CharField(max_length=20, choices=SUBMISSION_STATUS, default='pending', db_index=True)
@@ -62,6 +67,21 @@ class BankPaymentSubmission(models.Model):
     payment_date = models.DateField()
     description = models.TextField(blank=True)
     error_message = models.TextField(blank=True)
+
+    # Pilgrim Information (collected at bank)
+    pilgrim_first_name = models.CharField(max_length=100, blank=True)
+    pilgrim_last_name = models.CharField(max_length=100, blank=True)
+    pilgrim_gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
+    pilgrim_phone = models.CharField(max_length=20, blank=True)
+    pilgrim_email = models.EmailField(blank=True)
+
+    # Payer Information (who made the deposit)
+    payer_name = models.CharField(max_length=100, blank=True)
+    payer_contact = models.CharField(max_length=100, blank=True)
+    payer_relationship = models.CharField(max_length=50, blank=True, help_text='Relationship to pilgrim: Self, Parent, Spouse, etc.')
+
+    # Link to created pilgrim (after GIA creates them)
+    created_pilgrim_id = models.IntegerField(null=True, blank=True, db_index=True)
 
     submitted_by_user = models.CharField(max_length=100, blank=True)
     submitted_at = models.DateTimeField(auto_now_add=True)

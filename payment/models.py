@@ -19,6 +19,11 @@ class Payment(models.Model):
     description = models.TextField(blank=True)
     notes = models.TextField(blank=True)
 
+    # Payer Information (who made the deposit)
+    payer_name = models.CharField(max_length=100, blank=True)
+    payer_contact = models.CharField(max_length=100, blank=True)
+    payer_relationship = models.CharField(max_length=50, blank=True, help_text='Relationship to pilgrim')
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
