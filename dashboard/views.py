@@ -38,6 +38,37 @@ class HajjYearViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response({'error': 'No active Hajj year'}, status=status.HTTP_404_NOT_FOUND)
 
+    @action(detail=False, methods=['get'])
+    def statistics(self, request):
+        """Get statistics for all Hajj years"""
+        hajj_years = self.get_queryset().order_by('-year')
+        stats = []
+
+        for year in hajj_years:
+            pilgrims = Pilgrim.objects.filter(hajj_year=year)
+            pilgrim_count = pilgrims.count()
+
+            # Get payments for pilgrims in this year
+            submissions = BankPaymentSubmission.objects.filter(
+                pilgrim__in=pilgrims
+            )
+
+            verified_count = submissions.filter(status='verified').count()
+            pending_count = submissions.filter(status='pending').count()
+            total_payment = submissions.aggregate(Sum('amount'))['amount__sum'] or 0
+
+            stats.append({
+                'id': year.id,
+                'year': year.year,
+                'name': year.name,
+                'pilgrims': pilgrim_count,
+                'verified': verified_count,
+                'pending': pending_count,
+                'totalPayment': float(total_payment),
+            })
+
+        return Response(stats)
+
 
 class DashboardReportViewSet(viewsets.ModelViewSet):
     queryset = DashboardReport.objects.all()

@@ -3,6 +3,11 @@ import uuid
 
 
 class Bank(models.Model):
+    PAYMENT_ACCESS_CHOICES = [
+        ('date_restricted', 'Date Filter Only - Admin can only view payments using date filter'),
+        ('unrestricted', 'Unrestricted - Admin can view all payments without date filter'),
+    ]
+
     name = models.CharField(max_length=100, unique=True, db_index=True)
     code = models.CharField(max_length=10, unique=True, blank=True, null=True)
     country = models.CharField(max_length=100, blank=True, null=True)
@@ -10,6 +15,16 @@ class Bank(models.Model):
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
     logo = models.ImageField(upload_to='bank_logos/%Y/%m/%d/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
+    payment_view_access = models.CharField(
+        max_length=20,
+        choices=PAYMENT_ACCESS_CHOICES,
+        default='date_restricted',
+        help_text='Controls what payment data bank admins can view'
+    )
+    location_restricted = models.BooleanField(default=False, help_text='Enable location-based access restrictions for this bank')
+    location_latitude = models.FloatField(null=True, blank=True, help_text='Latitude coordinate for access location')
+    location_longitude = models.FloatField(null=True, blank=True, help_text='Longitude coordinate for access location')
+    location_radius = models.FloatField(default=1, help_text='Allowed access radius in kilometers')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
