@@ -13,6 +13,12 @@ class BankSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['created_at']
+        extra_kwargs = {
+            'code': {'required': False, 'allow_blank': True},
+            'country': {'required': False, 'allow_blank': True},
+            'contact_email': {'required': False, 'allow_blank': True},
+            'contact_phone': {'required': False, 'allow_blank': True},
+        }
 
     def to_representation(self, obj):
         data = super().to_representation(obj)
@@ -23,12 +29,6 @@ class BankSerializer(serializers.ModelSerializer):
             else:
                 data['logo'] = obj.logo.url
         return data
-        extra_kwargs = {
-            'code': {'required': False, 'allow_blank': True},
-            'country': {'required': False, 'allow_blank': True},
-            'contact_email': {'required': False, 'allow_blank': True},
-            'contact_phone': {'required': False, 'allow_blank': True},
-        }
 
 
 class BankDisplaySerializer(serializers.ModelSerializer):
