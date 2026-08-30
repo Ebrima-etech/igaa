@@ -3,6 +3,7 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 import dj_database_url
+import cloudinary
 
 load_dotenv()
 
@@ -43,6 +44,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_filters',
     'django_extensions',
+    'cloudinary_storage',
+    'cloudinary',
     'pilgrim',
     'payment',
     'banks',
@@ -104,12 +107,19 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# Cloudinary Configuration
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', 'divk8m0ff'),
+    api_key=os.getenv('CLOUDINARY_API_KEY', '661615993757787'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET', '4bAIXxPLEOph5_5mhUKou6NSsDY')
+)
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STORAGES = {
     'default': {
-        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
