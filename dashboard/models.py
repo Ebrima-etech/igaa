@@ -9,6 +9,21 @@ class HajjYear(models.Model):
     start_date = models.DateField(help_text="Start date of Hajj activities")
     end_date = models.DateField(help_text="End date of Hajj activities")
     is_active = models.BooleanField(default=False, help_text="Currently active Hajj year")
+    first_deposit_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Required first deposit amount for pilgrims"
+    )
+    total_package_fee = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text="Total Hajj package fee"
+    )
+    notes = models.TextField(blank=True, help_text="Additional notes about this Hajj year")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
