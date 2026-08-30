@@ -15,7 +15,13 @@ class BankSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Bank
-        fields = ['id', 'name', 'code', 'country', 'contact_email', 'contact_phone', 'logo', 'is_active', 'created_at']
+        fields = [
+            'id', 'name', 'code', 'country', 'contact_email', 'contact_phone', 'logo', 'is_active',
+            'payment_view_access',
+            'access_restricted', 'allowed_days', 'access_start_time', 'access_end_time',
+            'location_restricted', 'location_latitude', 'location_longitude', 'location_radius',
+            'created_at'
+        ]
         read_only_fields = ['created_at']
         extra_kwargs = {
             'code': {'required': False, 'allow_blank': True},
