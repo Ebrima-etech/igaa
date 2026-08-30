@@ -5,11 +5,38 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta
-from .models import DashboardReport, OperationalMetric
-from .serializers import DashboardReportSerializer, OperationalMetricSerializer
+from .models import DashboardReport, OperationalMetric, HajjYear
+from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer
 from pilgrim.models import Pilgrim
 from payment.models import Payment
 from banks.models import Bank, BankPaymentSubmission
+
+
+class HajjYearViewSet(viewsets.ModelViewSet):
+    """ViewSet for managing Hajj years"""
+    queryset = HajjYear.objects.all()
+    serializer_class = HajjYearSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-year']
+
+    def get_queryset(self):
+        """Non-admins can only view active Hajj years"""
+        queryset = HajjYear.objects.all()
+        try:
+            if not self.request.user.is_staff:
+                queryset = queryset.filter(is_active=True)
+        except:
+            pass
+        return queryset
+
+    @action(detail=False, methods=['get'])
+    def active(self, request):
+        """Get the currently active Hajj year"""
+        active_hajj = HajjYear.objects.filter(is_active=True).first()
+        if active_hajj:
+            serializer = self.get_serializer(active_hajj)
+            return Response(serializer.data)
+        return Response({'error': 'No active Hajj year'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class DashboardReportViewSet(viewsets.ModelViewSet):

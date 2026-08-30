@@ -1,6 +1,31 @@
 from django.db import models
 
 
+class HajjYear(models.Model):
+    """Represents a yearly Hajj event"""
+    year = models.IntegerField(unique=True, help_text="The year of the Hajj (e.g., 2026)")
+    name = models.CharField(max_length=100, help_text="Display name (e.g., 'GIA Hajj 2026')")
+    description = models.TextField(blank=True, help_text="Description of this Hajj year")
+    start_date = models.DateField(help_text="Start date of Hajj activities")
+    end_date = models.DateField(help_text="End date of Hajj activities")
+    is_active = models.BooleanField(default=False, help_text="Currently active Hajj year")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-year']
+        verbose_name_plural = "Hajj Years"
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # Ensure only one active Hajj year at a time
+        if self.is_active:
+            HajjYear.objects.exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+
 class DashboardReport(models.Model):
     REPORT_TYPES = [
         ('payment_summary', 'Payment Summary'),

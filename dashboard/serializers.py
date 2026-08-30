@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import DashboardReport, OperationalMetric
+from .models import DashboardReport, OperationalMetric, HajjYear
+
+
+class HajjYearSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HajjYear
+        fields = ['id', 'year', 'name', 'description', 'start_date', 'end_date', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class DashboardReportSerializer(serializers.ModelSerializer):
