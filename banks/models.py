@@ -13,7 +13,7 @@ class Bank(models.Model):
     country = models.CharField(max_length=100, blank=True, null=True)
     contact_email = models.EmailField(blank=True, null=True)
     contact_phone = models.CharField(max_length=20, blank=True, null=True)
-    logo = models.ImageField(upload_to='bank_logos/%Y/%m/%d/', blank=True, null=True)
+    logo = models.ImageField(upload_to='banks/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     payment_view_access = models.CharField(
         max_length=20,
