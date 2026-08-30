@@ -16,19 +16,23 @@ class PaymentViewSet(viewsets.ModelViewSet):
     ordering = ['-created_at']
 
     def get_queryset(self):
+        queryset = Payment.objects.all()
+
+        # Filter by bank if user is bank staff
         user = self.request.user
-        print(f"DEBUG: User {user.username}, has_role: {hasattr(user, 'role')}")
         try:
             role = user.role
-            print(f"DEBUG: User role: {role.role}, bank: {role.bank}")
             if role.role in ['bank_admin', 'bank_staff']:
-                print(f"DEBUG: Filtering by bank {role.bank}")
-                return Payment.objects.filter(bank=role.bank)
-        except Exception as e:
-            print(f"DEBUG: Exception in get_queryset: {e}")
+                queryset = queryset.filter(bank=role.bank)
+        except:
             pass
-        print(f"DEBUG: Returning all payments")
-        return Payment.objects.all()
+
+        # Filter by hajj_year if provided in query params
+        hajj_year = self.request.query_params.get('hajj_year')
+        if hajj_year:
+            queryset = queryset.filter(pilgrim__hajj_year_id=hajj_year)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':

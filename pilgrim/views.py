@@ -12,9 +12,19 @@ logger = logging.getLogger(__name__)
 class PilgrimViewSet(viewsets.ModelViewSet):
     queryset = Pilgrim.objects.all()
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['status', 'gender', 'nationality']
+    filterset_fields = ['status', 'gender', 'nationality', 'hajj_year']
     search_fields = ['registration_id', 'first_name', 'last_name', 'email', 'phone']
     ordering_fields = ['-created_at', 'first_name', 'status']
+
+    def get_queryset(self):
+        queryset = Pilgrim.objects.all()
+
+        # Filter by hajj_year if provided in query params
+        hajj_year = self.request.query_params.get('hajj_year')
+        if hajj_year:
+            queryset = queryset.filter(hajj_year_id=hajj_year)
+
+        return queryset
 
     def get_serializer_class(self):
         if self.action == 'list':
