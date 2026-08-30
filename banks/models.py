@@ -59,7 +59,8 @@ class BankPaymentSubmission(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     bank = models.ForeignKey(Bank, on_delete=models.CASCADE, related_name='submissions')
-    pilgrim_id = models.CharField(max_length=20, db_index=True, blank=True)
+    pilgrim = models.ForeignKey('pilgrim.Pilgrim', on_delete=models.SET_NULL, null=True, blank=True, related_name='bank_submissions')
+    pilgrim_registration_id = models.CharField(max_length=20, db_index=True, blank=True, help_text='Pilgrim registration ID from bank submission')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     reference_number = models.CharField(max_length=100, unique=True, db_index=True)
     status = models.CharField(max_length=20, choices=SUBMISSION_STATUS, default='pending', db_index=True)

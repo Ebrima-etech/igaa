@@ -56,12 +56,21 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = BankPaymentSubmission.objects.all()
+
+        # Filter by bank if user is bank staff
         try:
             if hasattr(user, 'role') and user.role.role in ['bank_admin', 'bank_staff']:
-                return BankPaymentSubmission.objects.filter(bank=user.role.bank)
+                queryset = queryset.filter(bank=user.role.bank)
         except:
             pass
-        return BankPaymentSubmission.objects.all()
+
+        # Filter by hajj_year if provided in query params
+        hajj_year = self.request.query_params.get('hajj_year')
+        if hajj_year:
+            queryset = queryset.filter(pilgrim__hajj_year_id=hajj_year)
+
+        return queryset
 
     @action(detail=False, methods=['post'])
     def manual_submission(self, request):
@@ -78,6 +87,10 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
             )
 
         try:
+            # Get active Hajj year
+            from dashboard.models import HajjYear
+            active_hajj_year = HajjYear.objects.filter(is_active=True).first()
+
             # Step 1: Create the pilgrim directly with complete information
             pilgrim = Pilgrim.objects.create(
                 first_name=serializer.validated_data['pilgrim_first_name'],
@@ -93,6 +106,7 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
                 state=serializer.validated_data.get('pilgrim_state', ''),
                 postal_code=serializer.validated_data.get('pilgrim_postal_code', ''),
                 country=serializer.validated_data.get('pilgrim_country', ''),
+                hajj_year=active_hajj_year,  # Link to active Hajj year
             )
 
             # Step 2: Create the bank payment submission
