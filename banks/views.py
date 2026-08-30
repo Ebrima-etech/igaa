@@ -237,7 +237,8 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
 
                     submission = BankPaymentSubmission.objects.create(
                         bank=bank,
-                        pilgrim_id=row['pilgrim_id'],
+                        pilgrim=pilgrim,  # Link to pilgrim ForeignKey
+                        pilgrim_registration_id=row['pilgrim_id'],  # Store registration ID for reference
                         amount=float(row['amount']),
                         reference_number=row['reference_number'],
                         payment_date=row['payment_date'],
@@ -248,7 +249,7 @@ class BankPaymentSubmissionViewSet(viewsets.ModelViewSet):
                     )
 
                     Payment.objects.create(
-                        pilgrim=pilgrim,
+                        pilgrim=pilgrim,  # Inherits hajj_year from pilgrim
                         bank=bank,
                         amount=float(row['amount']),
                         reference_number=row['reference_number'],
