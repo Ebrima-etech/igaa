@@ -15,6 +15,10 @@ class UserRole(models.Model):
     bank = models.ForeignKey('banks.Bank', on_delete=models.SET_NULL, null=True, blank=True,
                             help_text='Set only for bank users')
     is_active = models.BooleanField(default=True)
+    access_restricted = models.BooleanField(default=False, help_text='Enable time-based access restrictions for this user')
+    allowed_days = models.CharField(max_length=100, default='Mon,Tue,Wed,Thu,Fri', blank=True, help_text='Comma-separated days (Mon,Tue,Wed,Thu,Fri,Sat,Sun)')
+    access_start_time = models.TimeField(null=True, blank=True, help_text='Start time for access (HH:MM format)')
+    access_end_time = models.TimeField(null=True, blank=True, help_text='End time for access (HH:MM format)')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

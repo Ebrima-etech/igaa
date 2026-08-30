@@ -21,6 +21,10 @@ class Bank(models.Model):
         default='date_restricted',
         help_text='Controls what payment data bank admins can view'
     )
+    access_restricted = models.BooleanField(default=False, help_text='Enable time-based access restrictions for this bank')
+    allowed_days = models.CharField(max_length=100, default='Mon,Tue,Wed,Thu,Fri', blank=True, help_text='Comma-separated days (Mon,Tue,Wed,Thu,Fri,Sat,Sun)')
+    access_start_time = models.TimeField(null=True, blank=True, help_text='Start time for access (HH:MM format)')
+    access_end_time = models.TimeField(null=True, blank=True, help_text='End time for access (HH:MM format)')
     location_restricted = models.BooleanField(default=False, help_text='Enable location-based access restrictions for this bank')
     location_latitude = models.FloatField(null=True, blank=True, help_text='Latitude coordinate for access location')
     location_longitude = models.FloatField(null=True, blank=True, help_text='Longitude coordinate for access location')
