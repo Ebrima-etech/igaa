@@ -3,16 +3,6 @@ from .models import Bank, BankAccount, BankPaymentSubmission, PaymentMethod
 
 
 class BankSerializer(serializers.ModelSerializer):
-    logo = serializers.SerializerMethodField()
-
-    def get_logo(self, obj):
-        if obj.logo:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.logo.url)
-            return obj.logo.url
-        return None
-
     class Meta:
         model = Bank
         fields = [
@@ -23,6 +13,16 @@ class BankSerializer(serializers.ModelSerializer):
             'created_at'
         ]
         read_only_fields = ['created_at']
+
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                data['logo'] = request.build_absolute_uri(obj.logo.url)
+            else:
+                data['logo'] = obj.logo.url
+        return data
         extra_kwargs = {
             'code': {'required': False, 'allow_blank': True},
             'country': {'required': False, 'allow_blank': True},
