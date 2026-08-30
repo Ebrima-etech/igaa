@@ -13,6 +13,7 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'testserver',
     '*.onrender.com',
     'igaa.onrender.com',
 ] + (os.getenv('ALLOWED_HOSTS', '').split(',') if os.getenv('ALLOWED_HOSTS') else [])
@@ -20,7 +21,9 @@ ALLOWED_HOSTS = [
 # CSRF and Security Settings
 CSRF_TRUSTED_ORIGINS = [
     'https://igaa.onrender.com',
+    'https://iga-blush.vercel.app',
     'http://localhost:8000',
+    'http://localhost:3000',
 ]
 
 # Session and Cookie Settings for Production
