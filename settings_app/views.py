@@ -7,8 +7,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 import logging
 
-from .models import CurrencySettings, CurrencyRate, SystemSettings, SignatorySettings
-from .serializers import CurrencySettingsSerializer, SignatorySettingsSerializer
+from .models import CurrencySettings, CurrencyRate, SystemSettings, SignatorySettings, Signatory
+from .serializers import CurrencySettingsSerializer, SignatorySettingsSerializer, SignatorySerializer
 
 logger = logging.getLogger(__name__)
 
@@ -310,89 +310,252 @@ class HajjPackagePriceView(APIView):
             )
 
 
-class SignatorySettingsView(APIView):
+class SignatoryListView(APIView):
     """
-    API endpoint for managing signatory settings (digital signatures and stamps).
-
-    GET: Retrieve current signatory settings
-    POST: Create/update signatory settings (admin only)
+    API endpoint for listing all signatories.
+    GET: Retrieve all signatories (admin only)
+    POST: Create new signatory (admin only)
     """
 
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """
-        Retrieve current signatory settings.
-        Public endpoint - anyone can fetch this to get signature/stamp for receipts.
-        """
+        """Retrieve all signatories"""
         try:
-            settings = SignatorySettings.objects.filter(is_active=True).first()
+            if not request.user.is_staff and not request.user.is_superuser:
+                return Response(
+                    {'detail': 'Only administrators can view signatories'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
 
-            if not settings:
-                # Return default empty settings
-                return Response({
-                    'id': None,
-                    'signatory_name': 'GIA Bank Admin',
-                    'signatory_title': 'Bank Administrator',
-                    'digital_signature': None,
-                    'official_stamp': None,
-                    'stamp_color': '#16a34a',
-                    'bank_contact_email': 'support@giabanking.gm',
-                    'bank_contact_phone': '+220 XXX XXXX',
-                    'is_active': False
-                }, status=status.HTTP_200_OK)
-
-            serializer = SignatorySettingsSerializer(settings)
-            logger.info(f'Retrieved signatory settings for user {request.user.username}')
+            signatories = Signatory.objects.all()
+            serializer = SignatorySerializer(signatories, many=True)
+            logger.info(f'Retrieved all signatories for user {request.user.username}')
 
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         except Exception as e:
-            logger.exception(f'Error retrieving signatory settings: {str(e)}')
+            logger.exception(f'Error retrieving signatories: {str(e)}')
             return Response(
-                {'detail': f'Error retrieving settings: {str(e)}'},
+                {'detail': f'Error retrieving signatories: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
     def post(self, request):
-        """
-        Create or update signatory settings (admin only).
-        """
+        """Create new signatory"""
         try:
-            # Check if user is admin/staff
             if not request.user.is_staff and not request.user.is_superuser:
                 return Response(
-                    {'detail': 'Only administrators can manage signatory settings'},
+                    {'detail': 'Only administrators can create signatories'},
                     status=status.HTTP_403_FORBIDDEN
                 )
 
-            # Get or create the settings (should only be one)
-            settings, created = SignatorySettings.objects.get_or_create(id=1)
-
-            serializer = SignatorySettingsSerializer(settings, data=request.data, partial=True)
+            serializer = SignatorySerializer(data=request.data)
 
             if serializer.is_valid():
-                settings = serializer.save()
-                logger.info(f'✓ Signatory settings updated by user {request.user.username}')
+                signatory = serializer.save()
+                logger.info(f'✓ New signatory created by user {request.user.username}: {signatory.signatory_name}')
 
                 return Response(
                     {
                         'success': True,
-                        'message': 'Signatory settings updated successfully',
-                        'data': SignatorySettingsSerializer(settings).data
+                        'message': 'Signatory created successfully',
+                        'data': SignatorySerializer(signatory).data
                     },
-                    status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED
+                    status=status.HTTP_201_CREATED
                 )
             else:
-                logger.warning(f'Validation error updating signatory settings: {serializer.errors}')
+                logger.warning(f'Validation error creating signatory: {serializer.errors}')
                 return Response(
                     {'detail': serializer.errors},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
         except Exception as e:
-            logger.exception(f'Error updating signatory settings: {str(e)}')
+            logger.exception(f'Error creating signatory: {str(e)}')
             return Response(
-                {'detail': f'Error updating settings: {str(e)}'},
+                {'detail': f'Error creating signatory: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class SignatoryDetailView(APIView):
+    """
+    API endpoint for managing individual signatories.
+    GET: Retrieve signatory details (public - for receipts)
+    PUT: Update signatory (admin only)
+    DELETE: Delete signatory (admin only)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, signatory_id=None):
+        """
+        Retrieve signatory details.
+        If no ID provided, returns active signatory (public endpoint for receipts).
+        """
+        try:
+            if signatory_id:
+                # Admin getting specific signatory
+                if not request.user.is_staff and not request.user.is_superuser:
+                    return Response(
+                        {'detail': 'Only administrators can view signatory details'},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                signatory = Signatory.objects.get(id=signatory_id)
+            else:
+                # Public endpoint - get active signatory
+                signatory = Signatory.objects.filter(is_active=True).first()
+
+            if not signatory:
+                return Response(
+                    {'detail': 'Signatory not found'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            serializer = SignatorySerializer(signatory)
+            logger.info(f'Retrieved signatory for user {request.user.username}')
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Signatory.DoesNotExist:
+            return Response(
+                {'detail': 'Signatory not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.exception(f'Error retrieving signatory: {str(e)}')
+            return Response(
+                {'detail': f'Error retrieving signatory: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def put(self, request, signatory_id):
+        """Update signatory (admin only)"""
+        try:
+            if not request.user.is_staff and not request.user.is_superuser:
+                return Response(
+                    {'detail': 'Only administrators can update signatories'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            signatory = Signatory.objects.get(id=signatory_id)
+            serializer = SignatorySerializer(signatory, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                signatory = serializer.save()
+                logger.info(f'✓ Signatory updated by user {request.user.username}: {signatory.signatory_name}')
+
+                return Response(
+                    {
+                        'success': True,
+                        'message': 'Signatory updated successfully',
+                        'data': SignatorySerializer(signatory).data
+                    },
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {'detail': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Signatory.DoesNotExist:
+            return Response(
+                {'detail': 'Signatory not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.exception(f'Error updating signatory: {str(e)}')
+            return Response(
+                {'detail': f'Error updating signatory: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def delete(self, request, signatory_id):
+        """Delete signatory (admin only)"""
+        try:
+            if not request.user.is_staff and not request.user.is_superuser:
+                return Response(
+                    {'detail': 'Only administrators can delete signatories'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            signatory = Signatory.objects.get(id=signatory_id)
+            signatory_name = signatory.signatory_name
+            signatory.delete()
+
+            logger.info(f'✓ Signatory deleted by user {request.user.username}: {signatory_name}')
+
+            return Response(
+                {'success': True, 'message': 'Signatory deleted successfully'},
+                status=status.HTTP_204_NO_CONTENT
+            )
+
+        except Signatory.DoesNotExist:
+            return Response(
+                {'detail': 'Signatory not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.exception(f'Error deleting signatory: {str(e)}')
+            return Response(
+                {'detail': f'Error deleting signatory: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class SignatorySettingsView(APIView):
+    """Global signatory settings endpoint"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Get global signatory settings"""
+        try:
+            settings, _ = SignatorySettings.objects.get_or_create(id=1)
+            serializer = SignatorySettingsSerializer(settings)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception(f'Error retrieving signatory settings: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        """Update global signatory settings (admin only)"""
+        try:
+            if not request.user.is_staff and not request.user.is_superuser:
+                return Response(
+                    {'detail': 'Only administrators can update settings'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            settings, _ = SignatorySettings.objects.get_or_create(id=1)
+            serializer = SignatorySettingsSerializer(settings, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                settings = serializer.save()
+                logger.info(f'✓ Global signatory settings updated by user {request.user.username}')
+
+                return Response(
+                    {
+                        'success': True,
+                        'message': 'Settings updated successfully',
+                        'data': SignatorySettingsSerializer(settings).data
+                    },
+                    status=status.HTTP_200_OK
+                )
+            else:
+                return Response(
+                    {'detail': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception as e:
+            logger.exception(f'Error updating settings: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

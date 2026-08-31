@@ -1,6 +1,13 @@
 # settings_app/urls.py
 from django.urls import path
-from .views import CurrencySettingsView, CurrencyRatesListView, HajjPackagePriceView, SignatorySettingsView
+from .views import (
+    CurrencySettingsView,
+    CurrencyRatesListView,
+    HajjPackagePriceView,
+    SignatorySettingsView,
+    SignatoryListView,
+    SignatoryDetailView,
+)
 
 app_name = 'settings_app'
 
@@ -22,7 +29,23 @@ urlpatterns = [
         HajjPackagePriceView.as_view(),
         name='hajj-package-price'
     ),
-    # Signatory settings endpoint (digital signatures and stamps)
+    # Signatory endpoints
+    path(
+        'signatories/',
+        SignatoryListView.as_view(),
+        name='signatory-list'
+    ),
+    path(
+        'signatories/<int:signatory_id>/',
+        SignatoryDetailView.as_view(),
+        name='signatory-detail'
+    ),
+    path(
+        'signatories/active/',
+        SignatoryDetailView.as_view(),
+        name='signatory-active'
+    ),
+    # Global signatory settings
     path(
         'settings/signatory/',
         SignatorySettingsView.as_view(),

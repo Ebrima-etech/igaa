@@ -1,6 +1,6 @@
 # settings_app/admin.py
 from django.contrib import admin
-from .models import CurrencySettings, CurrencyRate, SignatorySettings
+from .models import CurrencySettings, CurrencyRate, SignatorySettings, Signatory
 
 
 class CurrencyRateInline(admin.TabularInline):
@@ -95,9 +95,9 @@ class CurrencySettingsAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
-@admin.register(SignatorySettings)
-class SignatorySettingsAdmin(admin.ModelAdmin):
-    """Admin interface for signatory settings (digital signatures and stamps)"""
+@admin.register(Signatory)
+class SignatoryAdmin(admin.ModelAdmin):
+    """Admin interface for individual signatories"""
 
     list_display = (
         'signatory_name',
@@ -114,6 +114,9 @@ class SignatorySettingsAdmin(admin.ModelAdmin):
         ('Signatory Information', {
             'fields': ('signatory_name', 'signatory_title', 'is_active')
         }),
+        ('Contact Information', {
+            'fields': ('email', 'phone')
+        }),
         ('Digital Signature', {
             'fields': ('digital_signature', 'signature_preview'),
             'description': 'Upload a digital signature image (PNG/JPG, transparent background recommended)'
@@ -121,9 +124,6 @@ class SignatorySettingsAdmin(admin.ModelAdmin):
         ('Official Stamp', {
             'fields': ('official_stamp', 'stamp_color', 'stamp_preview'),
             'description': 'Upload an official stamp/seal image (PNG/JPG, transparent background recommended)'
-        }),
-        ('Contact Information', {
-            'fields': ('bank_contact_email', 'bank_contact_phone')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -168,3 +168,21 @@ class SignatorySettingsAdmin(admin.ModelAdmin):
             if obj.official_stamp:
                 readonly.append('official_stamp')
         return readonly
+
+
+@admin.register(SignatorySettings)
+class SignatorySettingsAdmin(admin.ModelAdmin):
+    """Admin interface for global signatory settings"""
+
+    list_display = ('bank_contact_email', 'bank_contact_phone', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        ('Contact Information', {
+            'fields': ('bank_contact_email', 'bank_contact_phone')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

@@ -119,17 +119,15 @@ class SystemSettings(models.Model):
         return f'System Settings - Hajj Package: D{self.hajj_package_price}'
 
 
-class SignatorySettings(models.Model):
-    """Store digital signature and stamp for official receipts"""
+class Signatory(models.Model):
+    """Individual signatory for official receipts"""
 
     signatory_name = models.CharField(
         max_length=255,
-        default='GIA Bank Admin',
         help_text='Name of the authorized signatory'
     )
     signatory_title = models.CharField(
         max_length=255,
-        default='Bank Administrator',
         help_text='Title/position of the signatory'
     )
     digital_signature = models.ImageField(
@@ -149,6 +147,39 @@ class SignatorySettings(models.Model):
         default='#16a34a',
         help_text='Color of the stamp (hex format, e.g., #16a34a for green)'
     )
+    email = models.EmailField(
+        blank=True,
+        help_text='Signatory email'
+    )
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text='Signatory phone number'
+    )
+    is_active = models.BooleanField(
+        default=False,
+        help_text='Active signatory for receipt generation'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'Signatories'
+        ordering = ['-is_active', '-created_at']
+
+    def __str__(self):
+        return f'{self.signatory_name} ({self.signatory_title})'
+
+    def save(self, *args, **kwargs):
+        # Ensure only one active signatory
+        if self.is_active:
+            Signatory.objects.exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+
+class SignatorySettings(models.Model):
+    """Global signatory settings (bank contact info for receipts)"""
+
     bank_contact_email = models.EmailField(
         default='support@giabanking.gm',
         help_text='Bank contact email for receipt footer'
@@ -158,10 +189,6 @@ class SignatorySettings(models.Model):
         default='+220 XXX XXXX',
         help_text='Bank contact phone for receipt footer'
     )
-    is_active = models.BooleanField(
-        default=True,
-        help_text='Enable/disable use of these signatory settings'
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -169,4 +196,4 @@ class SignatorySettings(models.Model):
         verbose_name_plural = 'Signatory Settings'
 
     def __str__(self):
-        return f'Signatory: {self.signatory_name} ({self.signatory_title})'
+        return 'Global Signatory Settings'

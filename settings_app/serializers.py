@@ -1,6 +1,6 @@
 # settings_app/serializers.py
 from rest_framework import serializers
-from .models import CurrencySettings, CurrencyRate, SignatorySettings
+from .models import CurrencySettings, CurrencyRate, SignatorySettings, Signatory
 
 
 class CurrencyRateSerializer(serializers.ModelSerializer):
@@ -130,11 +130,11 @@ class CurrencySettingsSerializer(serializers.ModelSerializer):
         return ret
 
 
-class SignatorySettingsSerializer(serializers.ModelSerializer):
-    """Serializer for signatory settings (digital signatures and stamps)"""
+class SignatorySerializer(serializers.ModelSerializer):
+    """Serializer for individual signatories"""
 
     class Meta:
-        model = SignatorySettings
+        model = Signatory
         fields = [
             'id',
             'signatory_name',
@@ -142,9 +142,24 @@ class SignatorySettingsSerializer(serializers.ModelSerializer):
             'digital_signature',
             'official_stamp',
             'stamp_color',
+            'email',
+            'phone',
+            'is_active',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class SignatorySettingsSerializer(serializers.ModelSerializer):
+    """Serializer for global signatory settings"""
+
+    class Meta:
+        model = SignatorySettings
+        fields = [
+            'id',
             'bank_contact_email',
             'bank_contact_phone',
-            'is_active',
             'created_at',
             'updated_at'
         ]
