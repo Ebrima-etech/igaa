@@ -38,7 +38,7 @@ class PilgrimListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pilgrim
         fields = [
-            'id', 'registration_id', 'first_name', 'last_name', 'phone', 'status',
+            'id', 'registration_id', 'first_name', 'last_name', 'gender', 'phone', 'status',
             'total_amount_due', 'total_amount_paid', 'amount_remaining', 'created_at'
         ]
         read_only_fields = ['registration_id', 'created_at', 'amount_remaining']

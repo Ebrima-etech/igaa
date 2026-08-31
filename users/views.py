@@ -2,6 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 import logging
@@ -97,8 +99,16 @@ class UserRoleViewSet(viewsets.ModelViewSet):
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = AuditLog.objects.all()
+    queryset = AuditLog.objects.all().order_by('-created_at')
     serializer_class = AuditLogSerializer
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['action', 'model_name']
-    ordering_fields = ['-created_at']
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = {
+        'action': ['exact'],
+        'model_name': ['exact'],
+        'user': ['exact'],
+        'created_at': ['gte', 'lte', 'exact'],
+        'object_id': ['exact'],
+    }
+    ordering_fields = ['created_at', '-created_at']
+    ordering = ['-created_at']
