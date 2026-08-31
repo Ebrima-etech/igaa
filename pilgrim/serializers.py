@@ -17,11 +17,12 @@ class PilgrimSerializer(serializers.ModelSerializer):
     class Meta:
         model = Pilgrim
         fields = [
-            'id', 'registration_id', 'first_name', 'last_name', 'full_name', 'email', 'phone',
-            'date_of_birth', 'gender', 'nationality', 'passport_number', 'address', 'city',
+            'id', 'registration_id', 'first_name', 'last_name', 'full_name', 'email', 'phone', 'whatsapp',
+            'date_of_birth', 'gender', 'nationality', 'region', 'passport_number', 'address', 'city',
             'state', 'postal_code', 'country', 'status', 'hajj_year', 'total_amount_due', 'total_amount_paid',
             'amount_remaining', 'current_due', 'emergency_contact_name', 'emergency_contact_phone',
-            'emergency_contact_email', 'documents', 'created_at', 'updated_at'
+            'emergency_contact_email', 'second_contact_name', 'second_contact_phone', 'second_contact_whatsapp',
+            'second_contact_relationship', 'documents', 'created_at', 'updated_at'
         ]
         read_only_fields = ['registration_id', 'created_at', 'updated_at', 'full_name', 'amount_remaining', 'current_due', 'hajj_year']
 

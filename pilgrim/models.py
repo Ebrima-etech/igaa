@@ -15,6 +15,16 @@ class Pilgrim(models.Model):
         ('F', 'Female'),
     ]
 
+    REGION_CHOICES = [
+        ('banjul', 'Banjul (Capital Municipality)'),
+        ('kanifing', 'Kanifing (Municipality)'),
+        ('west_coast', 'West Coast Region'),
+        ('north_bank', 'North Bank Region'),
+        ('lower_river', 'Lower River Region'),
+        ('central_river', 'Central River Region'),
+        ('upper_river', 'Upper River Region'),
+    ]
+
     # Import HajjYear dynamically to avoid circular imports
     hajj_year = models.ForeignKey('dashboard.HajjYear', on_delete=models.PROTECT, null=True, blank=True, help_text="The Hajj year this pilgrim is registered for")
 
@@ -23,9 +33,11 @@ class Pilgrim(models.Model):
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True, blank=True, null=True)
     phone = models.CharField(max_length=20)
+    whatsapp = models.CharField(max_length=20, blank=True, help_text="WhatsApp contact number")
     date_of_birth = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
     nationality = models.CharField(max_length=100, blank=True)
+    region = models.CharField(max_length=50, choices=REGION_CHOICES, blank=True, help_text="Gambian region of residence")
     passport_number = models.CharField(max_length=50, unique=True, blank=True, null=True)
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
@@ -40,6 +52,12 @@ class Pilgrim(models.Model):
     emergency_contact_name = models.CharField(max_length=100, blank=True)
     emergency_contact_phone = models.CharField(max_length=20, blank=True)
     emergency_contact_email = models.EmailField(blank=True)
+
+    # Second contact person (backup contact if first contact is not responding)
+    second_contact_name = models.CharField(max_length=100, blank=True, help_text="Backup contact person name")
+    second_contact_phone = models.CharField(max_length=20, blank=True, help_text="Backup contact phone number")
+    second_contact_whatsapp = models.CharField(max_length=20, blank=True, help_text="Backup contact WhatsApp number")
+    second_contact_relationship = models.CharField(max_length=50, blank=True, help_text="Relationship to pilgrim")
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
