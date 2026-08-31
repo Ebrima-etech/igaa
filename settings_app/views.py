@@ -7,7 +7,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 import logging
 
-from .models import CurrencySettings, CurrencyRate
+from .models import CurrencySettings, CurrencyRate, SystemSettings
 from .serializers import CurrencySettingsSerializer
 
 logger = logging.getLogger(__name__)
@@ -241,4 +241,70 @@ class CurrencyRatesListView(APIView):
                     'message': 'Please configure currency settings first'
                 },
                 status=status.HTTP_404_NOT_FOUND
+            )
+
+
+class HajjPackagePriceView(APIView):
+    """
+    API endpoint for managing the default Hajj package price.
+
+    GET: Retrieve the current Hajj package price
+    POST: Update the Hajj package price
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retrieve the current Hajj package price."""
+        try:
+            settings, _ = SystemSettings.objects.get_or_create(id=1)
+            logger.info(f'Retrieved hajj package price for user {request.user.username}')
+            return Response({'price': float(settings.hajj_package_price)}, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception(f'Error retrieving hajj package price: {str(e)}')
+            return Response(
+                {'detail': f'Error retrieving price: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        """Update the Hajj package price."""
+        try:
+            price = request.data.get('price')
+
+            if price is None:
+                return Response(
+                    {'detail': 'price field is required'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            try:
+                price = float(price)
+            except (ValueError, TypeError):
+                return Response(
+                    {'detail': f'price must be a number, got {type(price).__name__}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if price < 0:
+                return Response(
+                    {'detail': f'price must be positive, got {price}'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            settings, _ = SystemSettings.objects.get_or_create(id=1)
+            settings.hajj_package_price = price
+            settings.save()
+
+            logger.info(f'✓ Hajj package price updated to {price} by user {request.user.username}')
+
+            return Response(
+                {'price': float(settings.hajj_package_price), 'message': 'Price updated successfully'},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            logger.exception(f'Error updating hajj package price: {str(e)}')
+            return Response(
+                {'detail': f'Error updating price: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

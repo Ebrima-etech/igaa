@@ -98,3 +98,22 @@ class CurrencyRate(models.Model):
 
     def __str__(self):
         return f'{self.code} - {float(self.rate):.6f} ({self.name})'
+
+
+class SystemSettings(models.Model):
+    """Global system settings for Hajj operations"""
+
+    hajj_package_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        help_text='Default Hajj package price used for all pilgrims'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'System Settings'
+
+    def __str__(self):
+        return f'System Settings - Hajj Package: D{self.hajj_package_price}'
