@@ -28,7 +28,7 @@ class CurrencySettings(models.Model):
     default_currency = models.CharField(
         max_length=3,
         choices=CURRENCY_CHOICES,
-        default='USD',
+        default='GMD',
         help_text='Default currency for displays'
     )
     base_currency = models.CharField(

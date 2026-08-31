@@ -175,7 +175,7 @@ class CurrencySettingsView(APIView):
         except CurrencySettings.DoesNotExist:
             # Return default settings for new users
             default_settings = {
-                'default_currency': 'USD',
+                'default_currency': 'GMD',
                 'base_currency': 'GMD',
                 'mode': 'manual',
                 'currencies': [
