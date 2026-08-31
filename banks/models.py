@@ -115,6 +115,22 @@ class BankPaymentSubmission(models.Model):
             models.Index(fields=['submitted_at']),
         ]
 
+    def save(self, *args, **kwargs):
+        """Update pilgrim's total_amount_paid when payment is verified"""
+        # If this is a verified payment with a linked pilgrim, update their total_amount_paid
+        if self.status == 'verified' and self.pilgrim:
+            # Calculate total of all verified payments for this pilgrim
+            total_verified = BankPaymentSubmission.objects.filter(
+                pilgrim=self.pilgrim,
+                status='verified'
+            ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+
+            # Update pilgrim's total_amount_paid
+            self.pilgrim.total_amount_paid = total_verified
+            self.pilgrim.save()
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"{self.bank.name} - {self.reference_number}"
 
