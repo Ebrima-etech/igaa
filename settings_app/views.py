@@ -320,14 +320,8 @@ class SignatoryListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Retrieve all signatories"""
+        """Retrieve all signatories (authenticated users can view)"""
         try:
-            if not request.user.is_staff and not request.user.is_superuser:
-                return Response(
-                    {'detail': 'Only administrators can view signatories'},
-                    status=status.HTTP_403_FORBIDDEN
-                )
-
             signatories = Signatory.objects.all()
             serializer = SignatorySerializer(signatories, many=True)
             logger.info(f'Retrieved all signatories for user {request.user.username}')
