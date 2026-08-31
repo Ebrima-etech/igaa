@@ -59,7 +59,7 @@ class ReceiptSerializer(serializers.ModelSerializer):
             'amount', 'payment_date',
             'generated_by', 'generated_by_name', 'generated_at'
         ]
-        read_only_fields = ['receipt_number', 'generated_at', 'signatory_name', 'generated_by_name', 'payment_reference']
+        read_only_fields = ['id', 'generated_at', 'signatory_name', 'generated_by_name', 'payment_reference', 'generated_by']
 
 
 class ReceiptListSerializer(serializers.ModelSerializer):
