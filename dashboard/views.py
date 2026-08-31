@@ -294,8 +294,14 @@ class DashboardSummaryViewSet(viewsets.ViewSet):
         bank_distribution_data = sorted([{'name': k, 'value': v} for k, v in bank_dist.items()], key=lambda x: x['value'], reverse=True)
 
         # 6. Payment Status - Completed vs Uncompleted
-        completed_count = pilgrims.filter(amount_remaining=0).count()
-        uncompleted_count = pilgrims.count() - completed_count
+        # Note: amount_remaining is a property, so we calculate it in Python, not in database query
+        completed_count = 0
+        uncompleted_count = 0
+        for p in pilgrims:
+            if p.amount_remaining == 0:
+                completed_count += 1
+            else:
+                uncompleted_count += 1
 
         payment_status_data = [
             {'name': 'Completed', 'value': completed_count, 'color': '#22c55e'},
