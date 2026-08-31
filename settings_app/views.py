@@ -7,8 +7,8 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 import logging
 
-from .models import CurrencySettings, CurrencyRate, SystemSettings
-from .serializers import CurrencySettingsSerializer
+from .models import CurrencySettings, CurrencyRate, SystemSettings, SignatorySettings
+from .serializers import CurrencySettingsSerializer, SignatorySettingsSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -306,5 +306,93 @@ class HajjPackagePriceView(APIView):
             logger.exception(f'Error updating hajj package price: {str(e)}')
             return Response(
                 {'detail': f'Error updating price: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class SignatorySettingsView(APIView):
+    """
+    API endpoint for managing signatory settings (digital signatures and stamps).
+
+    GET: Retrieve current signatory settings
+    POST: Create/update signatory settings (admin only)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        Retrieve current signatory settings.
+        Public endpoint - anyone can fetch this to get signature/stamp for receipts.
+        """
+        try:
+            settings = SignatorySettings.objects.filter(is_active=True).first()
+
+            if not settings:
+                # Return default empty settings
+                return Response({
+                    'id': None,
+                    'signatory_name': 'GIA Bank Admin',
+                    'signatory_title': 'Bank Administrator',
+                    'digital_signature': None,
+                    'official_stamp': None,
+                    'stamp_color': '#16a34a',
+                    'bank_contact_email': 'support@giabanking.gm',
+                    'bank_contact_phone': '+220 XXX XXXX',
+                    'is_active': False
+                }, status=status.HTTP_200_OK)
+
+            serializer = SignatorySettingsSerializer(settings)
+            logger.info(f'Retrieved signatory settings for user {request.user.username}')
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception(f'Error retrieving signatory settings: {str(e)}')
+            return Response(
+                {'detail': f'Error retrieving settings: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def post(self, request):
+        """
+        Create or update signatory settings (admin only).
+        """
+        try:
+            # Check if user is admin/staff
+            if not request.user.is_staff and not request.user.is_superuser:
+                return Response(
+                    {'detail': 'Only administrators can manage signatory settings'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Get or create the settings (should only be one)
+            settings, created = SignatorySettings.objects.get_or_create(id=1)
+
+            serializer = SignatorySettingsSerializer(settings, data=request.data, partial=True)
+
+            if serializer.is_valid():
+                settings = serializer.save()
+                logger.info(f'✓ Signatory settings updated by user {request.user.username}')
+
+                return Response(
+                    {
+                        'success': True,
+                        'message': 'Signatory settings updated successfully',
+                        'data': SignatorySettingsSerializer(settings).data
+                    },
+                    status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED
+                )
+            else:
+                logger.warning(f'Validation error updating signatory settings: {serializer.errors}')
+                return Response(
+                    {'detail': serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        except Exception as e:
+            logger.exception(f'Error updating signatory settings: {str(e)}')
+            return Response(
+                {'detail': f'Error updating settings: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

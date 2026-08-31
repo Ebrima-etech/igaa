@@ -1,6 +1,6 @@
 # settings_app/admin.py
 from django.contrib import admin
-from .models import CurrencySettings, CurrencyRate
+from .models import CurrencySettings, CurrencyRate, SignatorySettings
 
 
 class CurrencyRateInline(admin.TabularInline):
@@ -93,3 +93,78 @@ class CurrencySettingsAdmin(admin.ModelAdmin):
         if obj:  # Editing existing object
             return self.readonly_fields + ('user',)
         return self.readonly_fields
+
+
+@admin.register(SignatorySettings)
+class SignatorySettingsAdmin(admin.ModelAdmin):
+    """Admin interface for signatory settings (digital signatures and stamps)"""
+
+    list_display = (
+        'signatory_name',
+        'signatory_title',
+        'has_signature',
+        'has_stamp',
+        'is_active',
+        'updated_at'
+    )
+    list_filter = ('is_active', 'created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'signature_preview', 'stamp_preview')
+
+    fieldsets = (
+        ('Signatory Information', {
+            'fields': ('signatory_name', 'signatory_title', 'is_active')
+        }),
+        ('Digital Signature', {
+            'fields': ('digital_signature', 'signature_preview'),
+            'description': 'Upload a digital signature image (PNG/JPG, transparent background recommended)'
+        }),
+        ('Official Stamp', {
+            'fields': ('official_stamp', 'stamp_color', 'stamp_preview'),
+            'description': 'Upload an official stamp/seal image (PNG/JPG, transparent background recommended)'
+        }),
+        ('Contact Information', {
+            'fields': ('bank_contact_email', 'bank_contact_phone')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_signature(self, obj):
+        """Display if signature is uploaded"""
+        return '✓' if obj.digital_signature else '✗'
+    has_signature.short_description = 'Signature'
+    has_signature.boolean = True
+
+    def has_stamp(self, obj):
+        """Display if stamp is uploaded"""
+        return '✓' if obj.official_stamp else '✗'
+    has_stamp.short_description = 'Stamp'
+    has_stamp.boolean = True
+
+    def signature_preview(self, obj):
+        """Display preview of uploaded signature"""
+        if not obj.pk or not obj.digital_signature:
+            return 'No signature uploaded'
+        html = f'<img src="{obj.digital_signature.url}" style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; padding: 5px;" />'
+        return html
+    signature_preview.short_description = 'Signature Preview'
+
+    def stamp_preview(self, obj):
+        """Display preview of uploaded stamp"""
+        if not obj.pk or not obj.official_stamp:
+            return 'No stamp uploaded'
+        html = f'<img src="{obj.official_stamp.url}" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; padding: 5px;" />'
+        return html
+    stamp_preview.short_description = 'Stamp Preview'
+
+    def get_readonly_fields(self, request, obj=None):
+        """Make preview fields read-only"""
+        readonly = list(self.readonly_fields)
+        if obj and obj.pk:
+            if obj.digital_signature:
+                readonly.append('digital_signature')
+            if obj.official_stamp:
+                readonly.append('official_stamp')
+        return readonly

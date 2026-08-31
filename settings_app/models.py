@@ -117,3 +117,56 @@ class SystemSettings(models.Model):
 
     def __str__(self):
         return f'System Settings - Hajj Package: D{self.hajj_package_price}'
+
+
+class SignatorySettings(models.Model):
+    """Store digital signature and stamp for official receipts"""
+
+    signatory_name = models.CharField(
+        max_length=255,
+        default='GIA Bank Admin',
+        help_text='Name of the authorized signatory'
+    )
+    signatory_title = models.CharField(
+        max_length=255,
+        default='Bank Administrator',
+        help_text='Title/position of the signatory'
+    )
+    digital_signature = models.ImageField(
+        upload_to='receipts/signatures/',
+        blank=True,
+        null=True,
+        help_text='Digital signature image (PNG/JPG recommended, transparent background)'
+    )
+    official_stamp = models.ImageField(
+        upload_to='receipts/stamps/',
+        blank=True,
+        null=True,
+        help_text='Official stamp/seal image (PNG/JPG recommended, transparent background)'
+    )
+    stamp_color = models.CharField(
+        max_length=7,
+        default='#16a34a',
+        help_text='Color of the stamp (hex format, e.g., #16a34a for green)'
+    )
+    bank_contact_email = models.EmailField(
+        default='support@giabanking.gm',
+        help_text='Bank contact email for receipt footer'
+    )
+    bank_contact_phone = models.CharField(
+        max_length=20,
+        default='+220 XXX XXXX',
+        help_text='Bank contact phone for receipt footer'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text='Enable/disable use of these signatory settings'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'Signatory Settings'
+
+    def __str__(self):
+        return f'Signatory: {self.signatory_name} ({self.signatory_title})'
