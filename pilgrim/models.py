@@ -48,9 +48,18 @@ class Pilgrim(models.Model):
         if not self.registration_id:
             self.registration_id = self.generate_registration_id()
 
-        # Calculate total_amount_due based on Hajj year package price
+        # Calculate total_amount_due based on Hajj year package price or system default
         if self.hajj_year and self.hajj_year.total_package_fee:
             self.total_amount_due = self.hajj_year.total_package_fee
+        elif not self.total_amount_due:
+            # Fallback to system hajj package price if no year package price set
+            from settings_app.models import SystemSettings
+            try:
+                system_settings = SystemSettings.objects.get(id=1)
+                if system_settings.hajj_package_price:
+                    self.total_amount_due = system_settings.hajj_package_price
+            except SystemSettings.DoesNotExist:
+                pass
 
         super().save(*args, **kwargs)
 
@@ -79,8 +88,20 @@ class Pilgrim(models.Model):
     def amount_remaining(self):
         """Current due amount: package price - total paid"""
         package_price = self.total_amount_due
+
+        # Use HajjYear package price if available
         if self.hajj_year and self.hajj_year.total_package_fee:
             package_price = self.hajj_year.total_package_fee
+        # Fallback to system default if total_amount_due is 0
+        elif not package_price or package_price == 0:
+            from settings_app.models import SystemSettings
+            try:
+                system_settings = SystemSettings.objects.get(id=1)
+                if system_settings.hajj_package_price:
+                    package_price = system_settings.hajj_package_price
+            except SystemSettings.DoesNotExist:
+                pass
+
         return package_price - self.total_amount_paid
 
     @property
