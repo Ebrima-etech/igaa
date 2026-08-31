@@ -47,6 +47,11 @@ class Pilgrim(models.Model):
     def save(self, *args, **kwargs):
         if not self.registration_id:
             self.registration_id = self.generate_registration_id()
+
+        # Calculate total_amount_due based on Hajj year package price
+        if self.hajj_year and self.hajj_year.total_package_fee:
+            self.total_amount_due = self.hajj_year.total_package_fee
+
         super().save(*args, **kwargs)
 
     @staticmethod
@@ -72,7 +77,16 @@ class Pilgrim(models.Model):
 
     @property
     def amount_remaining(self):
-        return self.total_amount_due - self.total_amount_paid
+        """Current due amount: package price - total paid"""
+        package_price = self.total_amount_due
+        if self.hajj_year and self.hajj_year.total_package_fee:
+            package_price = self.hajj_year.total_package_fee
+        return package_price - self.total_amount_paid
+
+    @property
+    def current_due(self):
+        """Alias for amount_remaining - same calculation"""
+        return self.amount_remaining
 
 
 class PilgrimDocument(models.Model):
