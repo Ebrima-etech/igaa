@@ -120,14 +120,29 @@ class BankPaymentSubmission(models.Model):
         # If this is a verified payment with a linked pilgrim, update their total_amount_paid
         if self.status == 'verified' and self.pilgrim:
             # Calculate total of all verified payments for this pilgrim
-            total_verified = BankPaymentSubmission.objects.filter(
+            # This includes OTHER verified payments, we'll add current one if it's new
+            other_verified = BankPaymentSubmission.objects.filter(
                 pilgrim=self.pilgrim,
                 status='verified'
-            ).aggregate(models.Sum('amount'))['amount__sum'] or 0
+            ).exclude(id=self.id).aggregate(models.Sum('amount'))['amount__sum'] or 0
+
+            # Add current payment amount if it's being set to verified
+            total_verified = other_verified + self.amount
 
             # Update pilgrim's total_amount_paid
             self.pilgrim.total_amount_paid = total_verified
             self.pilgrim.save()
+        elif self.pilgrim and self.status != 'verified':
+            # If payment is being changed from verified to something else, recalculate
+            total_verified = BankPaymentSubmission.objects.filter(
+                pilgrim=self.pilgrim,
+                status='verified'
+            ).exclude(id=self.id).aggregate(models.Sum('amount'))['amount__sum'] or 0
+
+            # Only update if it's different
+            if self.pilgrim.total_amount_paid != total_verified:
+                self.pilgrim.total_amount_paid = total_verified
+                self.pilgrim.save()
 
         super().save(*args, **kwargs)
 
