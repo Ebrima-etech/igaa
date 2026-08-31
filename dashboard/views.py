@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from .models import DashboardReport, OperationalMetric, HajjYear
 from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer
 from pilgrim.models import Pilgrim
@@ -215,3 +215,115 @@ class DashboardSummaryViewSet(viewsets.ViewSet):
         from banks.serializers import BankPaymentSubmissionSerializer
         serializer = BankPaymentSubmissionSerializer(submissions, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def analytics(self, request):
+        """Comprehensive analytics data for frontend"""
+        hajj_year = request.query_params.get('hajj_year')
+
+        # Build queries based on hajj_year
+        if hajj_year:
+            pilgrims = Pilgrim.objects.filter(hajj_year_id=hajj_year)
+            submissions = BankPaymentSubmission.objects.filter(pilgrim__hajj_year_id=hajj_year)
+        else:
+            pilgrims = Pilgrim.objects.all()
+            submissions = BankPaymentSubmission.objects.all()
+
+        # 1. Pilgrim Trend - by registration date
+        pilgrim_trend = {}
+        for p in pilgrims:
+            date_key = p.created_at.strftime('%Y-%m-%d')
+            if date_key not in pilgrim_trend:
+                pilgrim_trend[date_key] = {'registrations': 0, 'completed': 0, 'date': p.created_at.strftime('%b %d')}
+            pilgrim_trend[date_key]['registrations'] += 1
+            if p.amount_remaining == 0:
+                pilgrim_trend[date_key]['completed'] += 1
+
+        pilgrim_trend_list = sorted(pilgrim_trend.items(), key=lambda x: x[0])[-15:]
+        pilgrim_trend_data = [{'date': v['date'], **v} for k, v in pilgrim_trend_list]
+
+        # 2. Payment Trend - by payment date
+        payment_trend = {}
+        for s in submissions:
+            date_key = s.payment_date.strftime('%Y-%m-%d')
+            if date_key not in payment_trend:
+                payment_trend[date_key] = {'amount': 0, 'transactions': 0, 'date': s.payment_date.strftime('%b %d')}
+            payment_trend[date_key]['amount'] += float(s.amount)
+            payment_trend[date_key]['transactions'] += 1
+
+        payment_trend_list = sorted(payment_trend.items(), key=lambda x: x[0])[-15:]
+        payment_trend_data = [{'date': v['date'], **v} for k, v in payment_trend_list]
+
+        # 3. Age Distribution - from pilgrim date_of_birth
+        age_ranges = {'18-25': 0, '26-35': 0, '36-45': 0, '46-55': 0, '56-65': 0, '65+': 0}
+        today = datetime.now().date()
+        for p in pilgrims:
+            if p.date_of_birth:
+                age = (today.year - p.date_of_birth.year) - ((today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day))
+                if 18 <= age <= 25:
+                    age_ranges['18-25'] += 1
+                elif 26 <= age <= 35:
+                    age_ranges['26-35'] += 1
+                elif 36 <= age <= 45:
+                    age_ranges['36-45'] += 1
+                elif 46 <= age <= 55:
+                    age_ranges['46-55'] += 1
+                elif 56 <= age <= 65:
+                    age_ranges['56-65'] += 1
+                elif age > 65:
+                    age_ranges['65+'] += 1
+
+        age_distribution_data = [{'range': k, 'count': v} for k, v in age_ranges.items()]
+
+        # 4. Region Distribution - from pilgrim region
+        region_dist = {}
+        region_choices = dict(Pilgrim.REGION_CHOICES)
+        for p in pilgrims:
+            region = p.region if p.region else 'Unknown'
+            region_name = region_choices.get(region, region)
+            region_dist[region_name] = region_dist.get(region_name, 0) + 1
+
+        region_distribution_data = sorted([{'name': k, 'value': v} for k, v in region_dist.items()], key=lambda x: x['value'], reverse=True)
+
+        # 5. Payment by Bank - from submissions
+        bank_dist = {}
+        for s in submissions:
+            bank_name = s.bank.name
+            bank_dist[bank_name] = bank_dist.get(bank_name, 0) + 1
+
+        bank_distribution_data = sorted([{'name': k, 'value': v} for k, v in bank_dist.items()], key=lambda x: x['value'], reverse=True)
+
+        # 6. Payment Status - Completed vs Uncompleted
+        completed_count = pilgrims.filter(amount_remaining=0).count()
+        uncompleted_count = pilgrims.count() - completed_count
+
+        payment_status_data = [
+            {'name': 'Completed', 'value': completed_count, 'color': '#22c55e'},
+            {'name': 'Uncompleted', 'value': uncompleted_count, 'color': '#eab308'},
+        ]
+
+        # 7. Metrics
+        total_pilgrims = pilgrims.count()
+        total_payment_amount = submissions.aggregate(Sum('amount'))['amount__sum'] or 0
+        payment_completion_rate = (completed_count / total_pilgrims * 100) if total_pilgrims > 0 else 0
+        active_banks = Bank.objects.filter(is_active=True, submissions__isnull=False).distinct().count() if not hajj_year else Bank.objects.filter(is_active=True, submissions__pilgrim__hajj_year_id=hajj_year).distinct().count()
+        total_regions = Pilgrim.objects.filter(**{'hajj_year_id': hajj_year} if hajj_year else {}).values_list('region', flat=True).distinct().count()
+
+        metrics = {
+            'totalPilgrims': total_pilgrims,
+            'totalPayment': float(total_payment_amount),
+            'avgPaymentAmount': float(total_payment_amount / submissions.count()) if submissions.count() > 0 else 0,
+            'paymentCompletionRate': round(payment_completion_rate),
+            'activeBanks': active_banks,
+            'totalRegions': total_regions,
+        }
+
+        return Response({
+            'pilgrimTrend': pilgrim_trend_data,
+            'paymentTrend': payment_trend_data,
+            'ageDistribution': age_distribution_data,
+            'regionDistribution': region_distribution_data,
+            'bankDistribution': bank_distribution_data,
+            'paymentStatus': payment_status_data,
+            'metrics': metrics,
+        })
