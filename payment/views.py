@@ -3,8 +3,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Q
+import logging
 from .models import Payment, PaymentSynchronization, Transaction, Receipt
 from .serializers import PaymentSerializer, PaymentListSerializer, TransactionSerializer, ReceiptSerializer, ReceiptListSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
