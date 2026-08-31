@@ -20,7 +20,7 @@ class HajjYearViewSet(viewsets.ModelViewSet):
     ordering = ['-year']
 
     def get_queryset(self):
-        """Non-admins can only view active Hajj years"""
+        """Return all Hajj years for staff, only active for non-staff"""
         queryset = HajjYear.objects.all()
         try:
             if not self.request.user.is_staff:
@@ -28,6 +28,33 @@ class HajjYearViewSet(viewsets.ModelViewSet):
         except:
             pass
         return queryset
+
+    def create(self, request, *args, **kwargs):
+        """Create a new Hajj year - staff only"""
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Only staff members can create Hajj years'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        """Update Hajj year - staff only"""
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Only staff members can update Hajj years'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        """Partial update Hajj year - staff only"""
+        if not request.user.is_staff:
+            return Response(
+                {'detail': 'Only staff members can update Hajj years'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
 
     @action(detail=False, methods=['get'])
     def active(self, request):
