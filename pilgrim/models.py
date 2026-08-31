@@ -86,26 +86,25 @@ class Pilgrim(models.Model):
 
     @property
     def amount_remaining(self):
-        """Current due amount: package price - total paid
-        Always uses current system/year settings, not stored total_amount_due"""
-        package_price = None
+        """Current due amount: system_package_price - total_amount_paid"""
+        package_price = 0
 
-        # Priority 1: Use HajjYear package price if available and set
-        if self.hajj_year and self.hajj_year.total_package_fee:
-            package_price = self.hajj_year.total_package_fee
+        # Always use system settings hajj package price first
+        from settings_app.models import SystemSettings
+        try:
+            system_settings = SystemSettings.objects.get(id=1)
+            if system_settings.hajj_package_price and system_settings.hajj_package_price > 0:
+                package_price = system_settings.hajj_package_price
+        except SystemSettings.DoesNotExist:
+            pass
 
-        # Priority 2: Use system default hajj package price
-        if not package_price:
-            from settings_app.models import SystemSettings
-            try:
-                system_settings = SystemSettings.objects.get(id=1)
-                if system_settings.hajj_package_price:
-                    package_price = system_settings.hajj_package_price
-            except SystemSettings.DoesNotExist:
-                pass
+        # If no system price, try HajjYear package price
+        if not package_price or package_price == 0:
+            if self.hajj_year and self.hajj_year.total_package_fee and self.hajj_year.total_package_fee > 0:
+                package_price = self.hajj_year.total_package_fee
 
-        # Priority 3: Fall back to stored total_amount_due only if nothing else available
-        if not package_price:
+        # Last resort: use stored total_amount_due
+        if not package_price or package_price == 0:
             package_price = self.total_amount_due or 0
 
         return package_price - self.total_amount_paid
