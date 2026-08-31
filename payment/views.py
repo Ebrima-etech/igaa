@@ -128,21 +128,29 @@ class ReceiptViewSet(viewsets.ModelViewSet):
         return ReceiptSerializer
 
     def create(self, request, *args, **kwargs):
-        data = request.data
-        receipt_number = data.get('receipt_number')
+        try:
+            data = request.data
+            receipt_number = data.get('receipt_number')
 
-        # Check if receipt already exists
-        if Receipt.objects.filter(receipt_number=receipt_number).exists():
+            # Check if receipt already exists
+            if Receipt.objects.filter(receipt_number=receipt_number).exists():
+                return Response(
+                    {'detail': 'Receipt with this number already exists'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            serializer = self.get_serializer(data=data)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            serializer.save(generated_by=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.exception(f'Error creating receipt: {str(e)}')
             return Response(
-                {'detail': 'Receipt with this number already exists'},
-                status=status.HTTP_400_BAD_REQUEST
+                {'detail': f'Error creating receipt: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        serializer = self.get_serializer(data=data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(generated_by=request.user)
-
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'])
     def summary(self, request):
