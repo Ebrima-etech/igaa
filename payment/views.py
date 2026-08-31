@@ -3,8 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Q
-from .models import Payment, PaymentSynchronization, Transaction
-from .serializers import PaymentSerializer, PaymentListSerializer, TransactionSerializer
+from .models import Payment, PaymentSynchronization, Transaction, Receipt
+from .serializers import PaymentSerializer, PaymentListSerializer, TransactionSerializer, ReceiptSerializer, ReceiptListSerializer
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -95,3 +95,62 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ['action', 'payment']
     ordering_fields = ['-created_at']
+
+
+class ReceiptViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated]
+    filterset_fields = ['payment', 'signatory']
+    search_fields = ['receipt_number', 'pilgrim_first_name', 'pilgrim_last_name']
+    ordering_fields = ['-generated_at']
+    ordering = ['-generated_at']
+
+    def get_queryset(self):
+        queryset = Receipt.objects.all()
+
+        # Only GIA admins can view all receipts
+        if not self.request.user.is_staff and not self.request.user.is_superuser:
+            return Receipt.objects.none()
+
+        # Filter by generated date range if provided
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        if start_date:
+            queryset = queryset.filter(generated_at__date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(generated_at__date__lte=end_date)
+
+        return queryset
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return ReceiptListSerializer
+        return ReceiptSerializer
+
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        receipt_number = data.get('receipt_number')
+
+        # Check if receipt already exists
+        if Receipt.objects.filter(receipt_number=receipt_number).exists():
+            return Response(
+                {'detail': 'Receipt with this number already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(generated_by=request.user)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'])
+    def summary(self, request):
+        queryset = self.get_queryset()
+        total_receipts = queryset.count()
+        total_amount = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
+
+        return Response({
+            'total_receipts': total_receipts,
+            'total_amount': str(total_amount),
+        })

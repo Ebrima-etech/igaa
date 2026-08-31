@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from pilgrim.models import Pilgrim
 
 
@@ -86,3 +87,41 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.payment.reference_number} - {self.get_action_display()}"
+
+
+class Receipt(models.Model):
+    payment = models.OneToOneField(Payment, on_delete=models.CASCADE, related_name='receipt')
+    signatory = models.ForeignKey('settings_app.Signatory', on_delete=models.SET_NULL, null=True, blank=True)
+    receipt_number = models.CharField(max_length=50, unique=True, db_index=True)
+
+    # Pilgrim information snapshot
+    pilgrim_first_name = models.CharField(max_length=100)
+    pilgrim_last_name = models.CharField(max_length=100)
+    pilgrim_email = models.EmailField(blank=True)
+    pilgrim_phone = models.CharField(max_length=20, blank=True)
+    pilgrim_passport = models.CharField(max_length=50, blank=True)
+    pilgrim_dob = models.DateField(blank=True, null=True)
+    pilgrim_gender = models.CharField(max_length=1, choices=[('M', 'Male'), ('F', 'Female')], blank=True)
+
+    # Payer information snapshot
+    payer_name = models.CharField(max_length=100)
+    payer_relationship = models.CharField(max_length=50, blank=True)
+
+    # Payment details snapshot
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    payment_date = models.DateField()
+
+    # Receipt metadata
+    generated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='generated_receipts')
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-generated_at']
+        indexes = [
+            models.Index(fields=['payment', 'generated_at']),
+            models.Index(fields=['receipt_number']),
+            models.Index(fields=['generated_at']),
+        ]
+
+    def __str__(self):
+        return f"Receipt {self.receipt_number} - {self.pilgrim_first_name} {self.pilgrim_last_name}"
