@@ -86,14 +86,16 @@ class Pilgrim(models.Model):
 
     @property
     def amount_remaining(self):
-        """Current due amount: package price - total paid"""
-        package_price = self.total_amount_due
+        """Current due amount: package price - total paid
+        Always uses current system/year settings, not stored total_amount_due"""
+        package_price = None
 
-        # Use HajjYear package price if available
+        # Priority 1: Use HajjYear package price if available and set
         if self.hajj_year and self.hajj_year.total_package_fee:
             package_price = self.hajj_year.total_package_fee
-        # Fallback to system default if total_amount_due is 0
-        elif not package_price or package_price == 0:
+
+        # Priority 2: Use system default hajj package price
+        if not package_price:
             from settings_app.models import SystemSettings
             try:
                 system_settings = SystemSettings.objects.get(id=1)
@@ -101,6 +103,10 @@ class Pilgrim(models.Model):
                     package_price = system_settings.hajj_package_price
             except SystemSettings.DoesNotExist:
                 pass
+
+        # Priority 3: Fall back to stored total_amount_due only if nothing else available
+        if not package_price:
+            package_price = self.total_amount_due or 0
 
         return package_price - self.total_amount_paid
 
