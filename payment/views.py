@@ -107,7 +107,7 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ReceiptViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsStaffUser]  # Only staff users can access receipts
+    permission_classes = [IsAuthenticated]
     filterset_fields = ['payment', 'signatory']
     search_fields = ['receipt_number', 'pilgrim_first_name', 'pilgrim_last_name']
     ordering_fields = ['-generated_at']
