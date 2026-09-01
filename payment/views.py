@@ -134,7 +134,7 @@ class ReceiptViewSet(viewsets.ModelViewSet):
         try:
             data = request.data.copy()
             receipt_number = data.get('receipt_number')
-            reference_number = data.get('reference_number')
+            reference_number = data.pop('reference_number', None)
             payment_id = data.get('payment')
 
             # Check if receipt already exists
