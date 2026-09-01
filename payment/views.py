@@ -132,8 +132,9 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
-            data = request.data
+            data = request.data.copy()
             receipt_number = data.get('receipt_number')
+            reference_number = data.get('reference_number')
 
             # Check if receipt already exists
             if Receipt.objects.filter(receipt_number=receipt_number).exists():
@@ -141,6 +142,17 @@ class ReceiptViewSet(viewsets.ModelViewSet):
                     {'detail': 'Receipt with this number already exists'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
+            # Look up the Payment by reference_number
+            if reference_number:
+                try:
+                    payment = Payment.objects.get(reference_number=reference_number)
+                    data['payment'] = payment.id
+                except Payment.DoesNotExist:
+                    logger.warning(f'Payment not found for reference: {reference_number}')
+                    data['payment'] = None
+            else:
+                data['payment'] = None
 
             serializer = self.get_serializer(data=data)
             if not serializer.is_valid():

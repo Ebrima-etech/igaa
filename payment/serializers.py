@@ -48,11 +48,12 @@ class ReceiptSerializer(serializers.ModelSerializer):
     signatory_name = serializers.CharField(source='signatory.signatory_name', read_only=True)
     generated_by_name = serializers.CharField(source='generated_by.username', read_only=True)
     payment_reference = serializers.CharField(source='payment.reference_number', read_only=True)
+    reference_number = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = Receipt
         fields = [
-            'id', 'payment', 'payment_reference', 'signatory', 'signatory_name', 'receipt_number',
+            'id', 'payment', 'payment_reference', 'reference_number', 'signatory', 'signatory_name', 'receipt_number',
             'pilgrim_first_name', 'pilgrim_last_name', 'pilgrim_email', 'pilgrim_phone',
             'pilgrim_passport', 'pilgrim_dob', 'pilgrim_gender',
             'payer_name', 'payer_relationship',
