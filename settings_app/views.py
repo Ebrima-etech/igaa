@@ -313,14 +313,17 @@ class HajjPackagePriceView(APIView):
 class SignatoryListView(APIView):
     """
     API endpoint for listing all signatories.
-    GET: Retrieve all signatories (authenticated users)
+    GET: Retrieve all signatories (public - for receipt display)
     POST: Create new signatory (admin only)
     """
 
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return []  # GET is public for receipt display
+        return [IsAuthenticated()]  # POST requires authentication
 
     def get(self, request):
-        """Retrieve all signatories (authenticated users can view)"""
+        """Retrieve all signatories (public for receipt display)"""
         try:
             signatories = Signatory.objects.all()
             serializer = SignatorySerializer(signatories, many=True)
@@ -381,12 +384,15 @@ class SignatoryDetailView(APIView):
     DELETE: Delete signatory (admin only)
     """
 
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return []  # GET is public for receipt display
+        return [IsAuthenticated()]  # PUT/DELETE require authentication
 
     def get(self, request, signatory_id=None):
         """
-        Retrieve signatory details.
-        If no ID provided, returns active signatory (public endpoint for receipts).
+        Retrieve signatory details (public endpoint for receipts).
+        If no ID provided, returns active signatory.
         """
         try:
             if signatory_id:
@@ -502,10 +508,13 @@ class SignatoryDetailView(APIView):
 class SignatorySettingsView(APIView):
     """Global signatory settings endpoint"""
 
-    permission_classes = [IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return []  # GET is public for receipt display
+        return [IsAuthenticated()]  # POST requires authentication
 
     def get(self, request):
-        """Get global signatory settings"""
+        """Get global signatory settings (public for receipt display)"""
         try:
             settings, _ = SignatorySettings.objects.get_or_create(id=1)
             serializer = SignatorySettingsSerializer(settings)
