@@ -189,6 +189,41 @@ class ReceiptViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+    @action(detail=True, methods=['get'])
+    def pdf(self, request, pk=None):
+        """Generate and download receipt as PDF"""
+        try:
+            from payment.pdf_service import generate_receipt_pdf
+            from django.http import FileResponse
+
+            receipt = self.get_object()
+
+            # Generate PDF
+            pdf_file = generate_receipt_pdf(receipt)
+
+            # Return as downloadable file
+            response = FileResponse(
+                pdf_file,
+                as_attachment=True,
+                filename=f'Receipt_{receipt.receipt_number}.pdf',
+                content_type='application/pdf'
+            )
+
+            logger.info(f'Generated PDF download for receipt {receipt.receipt_number}')
+            return response
+
+        except Receipt.DoesNotExist:
+            return Response(
+                {'detail': 'Receipt not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.exception(f'Error generating PDF: {str(e)}')
+            return Response(
+                {'detail': f'Error generating PDF: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
     @action(detail=False, methods=['get'])
     def summary(self, request):
         queryset = self.get_queryset()
