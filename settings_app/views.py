@@ -313,22 +313,18 @@ class HajjPackagePriceView(APIView):
 class SignatoryListView(APIView):
     """
     API endpoint for listing all signatories.
-    GET: Retrieve all signatories (public - needed for receipt display)
+    GET: Retrieve all signatories (authenticated users)
     POST: Create new signatory (admin only)
     """
 
-    def get_permissions(self):
-        if self.request.method == 'GET':
-            return []  # GET is public for receipt display
-        return [IsAuthenticated()]  # POST requires authentication
+    permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Retrieve all signatories (public endpoint for receipt display)"""
+        """Retrieve all signatories (authenticated users can view)"""
         try:
             signatories = Signatory.objects.all()
             serializer = SignatorySerializer(signatories, many=True)
-            user_info = f'user {request.user.username}' if request.user.is_authenticated else 'anonymous'
-            logger.info(f'Retrieved all signatories for {user_info}')
+            logger.info(f'Retrieved all signatories for user {request.user.username}')
 
             return Response(serializer.data, status=status.HTTP_200_OK)
 
