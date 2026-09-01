@@ -1,13 +1,19 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from django.db.models import Sum, Q
 import logging
 from .models import Payment, PaymentSynchronization, Transaction, Receipt
 from .serializers import PaymentSerializer, PaymentListSerializer, TransactionSerializer, ReceiptSerializer, ReceiptListSerializer
 
 logger = logging.getLogger(__name__)
+
+
+class IsStaffUser(IsAdminUser):
+    """Permission class for staff users"""
+    def has_permission(self, request, view):
+        return bool(request.user and (request.user.is_staff or request.user.is_superuser))
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
@@ -101,7 +107,7 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ReceiptViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsStaffUser]  # Only staff users can access receipts
     filterset_fields = ['payment', 'signatory']
     search_fields = ['receipt_number', 'pilgrim_first_name', 'pilgrim_last_name']
     ordering_fields = ['-generated_at']
@@ -109,10 +115,6 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = Receipt.objects.all()
-
-        # Only GIA admins can view all receipts
-        if not self.request.user.is_staff and not self.request.user.is_superuser:
-            return Receipt.objects.none()
 
         # Filter by generated date range if provided
         start_date = self.request.query_params.get('start_date')
