@@ -134,6 +134,8 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            from settings_app.models import Signatory
+
             data = request.data.copy()
             receipt_number = data.get('receipt_number')
             reference_number = data.pop('reference_number', None)
@@ -154,6 +156,25 @@ class ReceiptViewSet(viewsets.ModelViewSet):
                 except Payment.DoesNotExist:
                     logger.warning(f'Payment not found for reference: {reference_number}')
                     data['payment'] = None
+
+            # Auto-fetch active signatory if not provided
+            signatory_id = data.get('signatory')
+            if not signatory_id or signatory_id == 0 or signatory_id == "0":
+                try:
+                    active_signatory = Signatory.objects.filter(is_active=True).first()
+                    if not active_signatory:
+                        # Fallback to any signatory if no active one
+                        active_signatory = Signatory.objects.first()
+
+                    if active_signatory:
+                        data['signatory'] = active_signatory.id
+                        logger.info(f'Auto-fetched active signatory: {active_signatory.signatory_name}')
+                    else:
+                        logger.warning('No signatory found in database')
+                        data['signatory'] = None
+                except Exception as e:
+                    logger.warning(f'Error fetching signatory: {str(e)}')
+                    data['signatory'] = None
 
             serializer = self.get_serializer(data=data)
             if not serializer.is_valid():
