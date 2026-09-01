@@ -72,13 +72,13 @@ class BankPaymentSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankPaymentSubmission
         fields = [
-            'id', 'bank', 'bank_name', 'pilgrim_id', 'amount', 'reference_number', 'status',
+            'id', 'bank', 'bank_name', 'pilgrim_id', 'payment', 'amount', 'reference_number', 'status',
             'submission_method', 'payment_date', 'description', 'error_message',
             'submitted_by_user', 'submitted_at', 'verified_at',
             'pilgrim_first_name', 'pilgrim_last_name', 'pilgrim_gender', 'pilgrim_phone', 'pilgrim_email',
             'payer_name', 'payer_contact', 'payer_relationship', 'created_pilgrim_id'
         ]
-        read_only_fields = ['submitted_at', 'verified_at', 'bank_name', 'created_pilgrim_id']
+        read_only_fields = ['submitted_at', 'verified_at', 'bank_name', 'created_pilgrim_id', 'payment']
 
 
 class ManualPaymentSubmissionSerializer(serializers.Serializer):
