@@ -7,7 +7,16 @@ import logging
 
 from payment.models import Payment
 from settings_app.models import EmailNotificationSettings
-from email_service import send_payment_notification, send_receipt_notification
+
+try:
+    from igaa.email_service import send_payment_notification, send_receipt_notification
+except ImportError:
+    # Fallback if module path is different
+    try:
+        from email_service import send_payment_notification, send_receipt_notification
+    except ImportError:
+        send_payment_notification = None
+        send_receipt_notification = None
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +26,10 @@ def handle_payment_created(sender, instance, created, **kwargs):
     """Trigger email notification when payment is created"""
     if created:
         try:
+            if not send_payment_notification:
+                logger.warning('Email service not available, skipping notification')
+                return
+
             settings = EmailNotificationSettings.get_settings()
             if settings.notify_on_payment:
                 logger.info(f'Payment created: {instance.id}. Queuing notification.')
