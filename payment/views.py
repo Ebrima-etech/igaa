@@ -108,8 +108,8 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ReceiptViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
-    filterset_fields = ['payment', 'signatory']
-    search_fields = ['receipt_number']
+    filterset_fields = ['signatory']
+    search_fields = ['receipt_number', 'payment_reference']
     ordering_fields = ['-created_at']
     ordering = ['-created_at']
 
@@ -138,8 +138,7 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
             data = request.data.copy()
             receipt_number = data.get('receipt_number')
-            reference_number = data.pop('reference_number', None)
-            payment_id = data.get('payment')
+            payment_reference = data.get('payment')  # Frontend sends payment ID as 'payment'
 
             # Check if receipt already exists
             if Receipt.objects.filter(receipt_number=receipt_number).exists():
@@ -148,23 +147,22 @@ class ReceiptViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # If payment_id not provided, try to look up by reference_number as fallback
-            if not payment_id and reference_number:
+            # Convert payment ID to payment reference
+            if payment_reference:
                 try:
-                    payment = Payment.objects.get(reference_number=reference_number)
-                    data['payment'] = payment.id
+                    payment = Payment.objects.get(id=payment_reference)
                     data['payment_reference'] = payment.reference_number
                 except Payment.DoesNotExist:
-                    logger.warning(f'Payment not found for reference: {reference_number}')
-                    data['payment'] = None
-            elif payment_id:
-                # Get payment reference from payment object
-                try:
-                    payment = Payment.objects.get(id=payment_id)
-                    data['payment_reference'] = payment.reference_number
-                except Payment.DoesNotExist:
-                    logger.warning(f'Payment not found for id: {payment_id}')
-                    data['payment_reference'] = reference_number or ''
+                    logger.warning(f'Payment not found for id: {payment_reference}')
+                    return Response(
+                        {'detail': 'Payment not found'},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                data['payment_reference'] = ''
+
+            # Remove payment field if it exists
+            data.pop('payment', None)
 
             # Auto-fetch active signatory if not provided
             signatory_id = data.get('signatory')

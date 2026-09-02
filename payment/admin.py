@@ -40,14 +40,14 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
-    list_display = ['receipt_number', 'payment', 'signatory', 'created_at']
+    list_display = ['receipt_number', 'payment_reference', 'signatory', 'created_at']
     list_filter = ['signatory', 'created_at']
-    search_fields = ['receipt_number', 'payment__reference_number']
+    search_fields = ['receipt_number', 'payment_reference']
     readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         ('Receipt Information', {
-            'fields': ('receipt_number', 'payment', 'signatory')
+            'fields': ('receipt_number', 'payment_reference', 'signatory')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

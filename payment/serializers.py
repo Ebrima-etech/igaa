@@ -51,7 +51,7 @@ class ReceiptSerializer(serializers.ModelSerializer):
     class Meta:
         model = Receipt
         fields = [
-            'id', 'payment', 'payment_reference', 'signatory', 'signatory_name', 'signatory_title',
+            'id', 'payment_reference', 'signatory', 'signatory_name', 'signatory_title',
             'receipt_number', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'signatory_name', 'signatory_title']
