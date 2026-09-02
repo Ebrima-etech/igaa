@@ -1,6 +1,9 @@
 # settings_app/serializers.py
 from rest_framework import serializers
-from .models import CurrencySettings, CurrencyRate, SignatorySettings, Signatory
+from .models import (
+    CurrencySettings, CurrencyRate, SignatorySettings, Signatory,
+    EmailNotification, EmailNotificationSettings
+)
 
 
 class CurrencyRateSerializer(serializers.ModelSerializer):
@@ -164,3 +167,49 @@ class SignatorySettingsSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class EmailNotificationSerializer(serializers.ModelSerializer):
+    """Serializer for email notification recipients"""
+
+    class Meta:
+        model = EmailNotification
+        fields = ['id', 'email', 'description', 'is_active', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def validate_email(self, value):
+        """Ensure email is unique (except for current instance)"""
+        if self.instance:
+            if EmailNotification.objects.filter(email=value).exclude(id=self.instance.id).exists():
+                raise serializers.ValidationError("This email already exists.")
+        else:
+            if EmailNotification.objects.filter(email=value).exists():
+                raise serializers.ValidationError("This email already exists.")
+        return value
+
+
+class EmailNotificationSettingsSerializer(serializers.ModelSerializer):
+    """Serializer for global email notification settings"""
+
+    class Meta:
+        model = EmailNotificationSettings
+        fields = [
+            'id',
+            'enable_notifications',
+            'notify_on_payment',
+            'notify_on_receipt',
+            'notification_delay',
+            'email_from',
+            'email_subject',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate_notification_delay(self, value):
+        """Ensure delay is between 0 and 1440 minutes (24 hours)"""
+        if value < 0:
+            raise serializers.ValidationError("Delay cannot be negative")
+        if value > 1440:
+            raise serializers.ValidationError("Delay cannot exceed 24 hours (1440 minutes)")
+        return value

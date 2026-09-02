@@ -8,5 +8,8 @@ class SettingsAppConfig(AppConfig):
     verbose_name = 'Currency Settings'
 
     def ready(self):
-        """Initialize app"""
-        pass
+        """Initialize app and register signals"""
+        try:
+            import igaa.signals  # Import signals for email notifications
+        except ImportError:
+            pass

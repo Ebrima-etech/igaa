@@ -1,5 +1,6 @@
 # settings_app/urls.py
-from django.urls import path
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 from .views import (
     CurrencySettingsView,
     CurrencyRatesListView,
@@ -7,7 +8,11 @@ from .views import (
     SignatorySettingsView,
     SignatoryListView,
     SignatoryDetailView,
+    EmailNotificationViewSet,
 )
+
+router = DefaultRouter()
+router.register(r'settings/email-notifications', EmailNotificationViewSet, basename='email-notification')
 
 app_name = 'settings_app'
 
@@ -52,3 +57,6 @@ urlpatterns = [
         name='signatory-settings'
     ),
 ]
+
+# Add router URLs for email notifications
+urlpatterns += router.urls

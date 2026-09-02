@@ -2,13 +2,21 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.decorators import action
+from rest_framework.viewsets import ModelViewSet
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 import logging
 
-from .models import CurrencySettings, CurrencyRate, SystemSettings, SignatorySettings, Signatory
-from .serializers import CurrencySettingsSerializer, SignatorySettingsSerializer, SignatorySerializer
+from .models import (
+    CurrencySettings, CurrencyRate, SystemSettings, SignatorySettings, Signatory,
+    EmailNotification, EmailNotificationSettings
+)
+from .serializers import (
+    CurrencySettingsSerializer, SignatorySettingsSerializer, SignatorySerializer,
+    EmailNotificationSerializer, EmailNotificationSettingsSerializer
+)
 
 logger = logging.getLogger(__name__)
 
@@ -549,6 +557,113 @@ class SignatorySettingsView(APIView):
 
         except Exception as e:
             logger.exception(f'Error updating settings: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class EmailNotificationViewSet(ModelViewSet):
+    """
+    API endpoints for email notification management.
+
+    List: GET /settings/email-notifications/
+    Create: POST /settings/email-notifications/
+    Retrieve: GET /settings/email-notifications/{id}/
+    Update: PUT/PATCH /settings/email-notifications/{id}/
+    Delete: DELETE /settings/email-notifications/{id}/
+    Config: GET/PUT /settings/email-notifications/config/
+    """
+
+    queryset = EmailNotification.objects.all()
+    serializer_class = EmailNotificationSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        """List all email notification recipients"""
+        try:
+            return super().list(request, *args, **kwargs)
+        except Exception as e:
+            logger.exception(f'Error listing email notifications: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def create(self, request, *args, **kwargs):
+        """Create new email notification recipient"""
+        try:
+            response = super().create(request, *args, **kwargs)
+            logger.info(f'✓ Email notification added by user {request.user.username}: {request.data.get("email")}')
+            return response
+        except Exception as e:
+            logger.exception(f'Error creating email notification: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def update(self, request, *args, **kwargs):
+        """Update email notification recipient"""
+        try:
+            response = super().update(request, *args, **kwargs)
+            logger.info(f'✓ Email notification updated by user {request.user.username}')
+            return response
+        except Exception as e:
+            logger.exception(f'Error updating email notification: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def destroy(self, request, *args, **kwargs):
+        """Delete email notification recipient"""
+        try:
+            email = self.get_object().email
+            response = super().destroy(request, *args, **kwargs)
+            logger.info(f'✓ Email notification deleted by user {request.user.username}: {email}')
+            return response
+        except Exception as e:
+            logger.exception(f'Error deleting email notification: {str(e)}')
+            return Response(
+                {'detail': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['get', 'put'], permission_classes=[IsAuthenticated, IsAdminUser])
+    def config(self, request):
+        """Get or update global email notification settings"""
+        try:
+            settings = EmailNotificationSettings.get_settings()
+
+            if request.method == 'PUT':
+                serializer = EmailNotificationSettingsSerializer(
+                    settings,
+                    data=request.data,
+                    partial=True
+                )
+                if serializer.is_valid():
+                    settings = serializer.save()
+                    logger.info(f'✓ Email notification settings updated by user {request.user.username}')
+                    return Response(
+                        {
+                            'success': True,
+                            'message': 'Settings updated successfully',
+                            'data': EmailNotificationSettingsSerializer(settings).data
+                        },
+                        status=status.HTTP_200_OK
+                    )
+                else:
+                    return Response(
+                        {'detail': serializer.errors},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+            serializer = EmailNotificationSettingsSerializer(settings)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception(f'Error managing email notification settings: {str(e)}')
             return Response(
                 {'detail': f'Error: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

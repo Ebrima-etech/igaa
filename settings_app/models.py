@@ -197,3 +197,71 @@ class SignatorySettings(models.Model):
 
     def __str__(self):
         return 'Global Signatory Settings'
+
+
+class EmailNotification(models.Model):
+    """Store email addresses for payment and receipt notifications"""
+
+    email = models.EmailField(unique=True)
+    description = models.CharField(
+        max_length=255,
+        blank=True,
+        help_text='Description for this email recipient (e.g., Admin, Finance Team)'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text='Whether this email should receive notifications'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Email Notifications'
+
+    def __str__(self):
+        return f'{self.email} ({self.description or "No description"})' if self.description else self.email
+
+
+class EmailNotificationSettings(models.Model):
+    """Global configuration for email notifications"""
+
+    enable_notifications = models.BooleanField(
+        default=True,
+        help_text='Enable or disable all email notifications'
+    )
+    notify_on_payment = models.BooleanField(
+        default=True,
+        help_text='Send notification when new payment is created'
+    )
+    notify_on_receipt = models.BooleanField(
+        default=False,
+        help_text='Send notification when receipt is generated'
+    )
+    notification_delay = models.IntegerField(
+        default=0,
+        help_text='Delay before sending notification in minutes (0 = immediate)'
+    )
+    email_from = models.EmailField(
+        default='noreply@giabanking.gm',
+        help_text='Email address to send notifications from'
+    )
+    email_subject = models.CharField(
+        max_length=255,
+        default='GIA Banking Notification',
+        help_text='Subject line for notification emails'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'Email Notification Settings'
+
+    def __str__(self):
+        return 'Email Notification Settings'
+
+    @classmethod
+    def get_settings(cls):
+        """Get or create default settings"""
+        settings, _ = cls.objects.get_or_create(id=1)
+        return settings

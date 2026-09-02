@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 0;
+        }
+        .header {
+            background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .header h2 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0 0 5px 5px;
+            background-color: #fafafa;
+        }
+        .detail {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: white;
+            border-left: 4px solid #0891b2;
+            border-radius: 4px;
+        }
+        .label {
+            font-weight: 600;
+            color: #0891b2;
+            display: inline-block;
+            min-width: 150px;
+        }
+        .value {
+            font-weight: 500;
+            color: #1f2937;
+        }
+        .receipt-number {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: 600;
+            color: #0891b2;
+            background-color: #ecf9fb;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            background-color: white;
+            border-radius: 0 0 5px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>📄 New Receipt Generated</h2>
+            <p style="margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">GIA Banking System</p>
+        </div>
+
+        <div class="content">
+            <p style="font-size: 16px; color: #1f2937; margin-top: 0;">
+                A new receipt has been successfully generated in the GIA Banking System.
+            </p>
+
+            <div class="detail">
+                <span class="label">Receipt Number:</span>
+                <br>
+                <span class="receipt-number">{{ receipt_number }}</span>
+            </div>
+
+            <div class="detail">
+                <span class="label">Payment Reference:</span>
+                <span class="value">{{ payment_reference }}</span>
+            </div>
+
+            <div class="detail">
+                <span class="label">Generated Date:</span>
+                <span class="value">{{ date|date:"F d, Y H:i" }}</span>
+            </div>
+
+            <p style="background-color: #ecf9fb; padding: 15px; border-radius: 4px; color: #0891b2; font-size: 14px; margin-top: 20px;">
+                <strong>Note:</strong> This receipt has been archived in the GIA Banking System and is available for future reference and auditing purposes.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p style="margin: 0;">This is an automated notification from GIA Banking System</p>
+            <p style="margin: 5px 0 0 0;">Please do not reply to this email. Contact support@giabanking.gm for inquiries.</p>
+            <p style="margin: 15px 0 0 0; opacity: 0.7;">&copy; 2025 GIA Bank. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
