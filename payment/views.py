@@ -109,21 +109,21 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
 class ReceiptViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     filterset_fields = ['payment', 'signatory']
-    search_fields = ['receipt_number', 'pilgrim_first_name', 'pilgrim_last_name']
-    ordering_fields = ['-generated_at']
-    ordering = ['-generated_at']
+    search_fields = ['receipt_number']
+    ordering_fields = ['-created_at']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         queryset = Receipt.objects.all()
 
-        # Filter by generated date range if provided
+        # Filter by created date range if provided
         start_date = self.request.query_params.get('start_date')
         end_date = self.request.query_params.get('end_date')
 
         if start_date:
-            queryset = queryset.filter(generated_at__date__gte=start_date)
+            queryset = queryset.filter(created_at__date__gte=start_date)
         if end_date:
-            queryset = queryset.filter(generated_at__date__lte=end_date)
+            queryset = queryset.filter(created_at__date__lte=end_date)
 
         return queryset
 
@@ -180,7 +180,7 @@ class ReceiptViewSet(viewsets.ModelViewSet):
             if not serializer.is_valid():
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            serializer.save(generated_by=request.user)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.exception(f'Error creating receipt: {str(e)}')
@@ -193,9 +193,7 @@ class ReceiptViewSet(viewsets.ModelViewSet):
     def summary(self, request):
         queryset = self.get_queryset()
         total_receipts = queryset.count()
-        total_amount = queryset.aggregate(Sum('amount'))['amount__sum'] or 0
 
         return Response({
             'total_receipts': total_receipts,
-            'total_amount': str(total_amount),
         })
