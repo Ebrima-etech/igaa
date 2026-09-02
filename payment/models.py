@@ -91,6 +91,7 @@ class Transaction(models.Model):
 
 class Receipt(models.Model):
     payment = models.OneToOneField(Payment, on_delete=models.CASCADE, related_name='receipt', null=True, blank=True)
+    payment_reference = models.CharField(max_length=100, blank=True, db_index=True)
     signatory = models.ForeignKey('settings_app.Signatory', on_delete=models.SET_NULL, null=True, blank=True)
     receipt_number = models.CharField(max_length=50, unique=True, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True)

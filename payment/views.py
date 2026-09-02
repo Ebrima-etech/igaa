@@ -153,9 +153,18 @@ class ReceiptViewSet(viewsets.ModelViewSet):
                 try:
                     payment = Payment.objects.get(reference_number=reference_number)
                     data['payment'] = payment.id
+                    data['payment_reference'] = payment.reference_number
                 except Payment.DoesNotExist:
                     logger.warning(f'Payment not found for reference: {reference_number}')
                     data['payment'] = None
+            elif payment_id:
+                # Get payment reference from payment object
+                try:
+                    payment = Payment.objects.get(id=payment_id)
+                    data['payment_reference'] = payment.reference_number
+                except Payment.DoesNotExist:
+                    logger.warning(f'Payment not found for id: {payment_id}')
+                    data['payment_reference'] = reference_number or ''
 
             # Auto-fetch active signatory if not provided
             signatory_id = data.get('signatory')

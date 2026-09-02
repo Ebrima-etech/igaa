@@ -47,7 +47,6 @@ class PaymentListSerializer(serializers.ModelSerializer):
 class ReceiptSerializer(serializers.ModelSerializer):
     signatory_name = serializers.CharField(source='signatory.signatory_name', read_only=True, allow_null=True)
     signatory_title = serializers.CharField(source='signatory.signatory_title', read_only=True, allow_null=True)
-    payment_reference = serializers.CharField(source='payment.reference_number', read_only=True, allow_null=True)
 
     class Meta:
         model = Receipt
@@ -55,16 +54,15 @@ class ReceiptSerializer(serializers.ModelSerializer):
             'id', 'payment', 'payment_reference', 'signatory', 'signatory_name', 'signatory_title',
             'receipt_number', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'signatory_name', 'signatory_title', 'payment_reference']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'signatory_name', 'signatory_title']
 
 
 class ReceiptListSerializer(serializers.ModelSerializer):
     signatory_name = serializers.CharField(source='signatory.signatory_name', read_only=True, allow_null=True)
-    payment_reference = serializers.CharField(source='payment.reference_number', read_only=True, allow_null=True)
 
     class Meta:
         model = Receipt
         fields = [
             'id', 'receipt_number', 'payment_reference', 'signatory_name', 'created_at'
         ]
-        read_only_fields = ['id', 'receipt_number', 'payment_reference', 'signatory_name', 'created_at']
+        read_only_fields = ['id', 'receipt_number', 'signatory_name', 'created_at']
