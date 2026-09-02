@@ -47,30 +47,24 @@ class PaymentListSerializer(serializers.ModelSerializer):
 class ReceiptSerializer(serializers.ModelSerializer):
     signatory_name = serializers.CharField(source='signatory.signatory_name', read_only=True, allow_null=True)
     signatory_title = serializers.CharField(source='signatory.signatory_title', read_only=True, allow_null=True)
-    generated_by_name = serializers.CharField(source='generated_by.username', read_only=True)
     payment_reference = serializers.CharField(source='payment.reference_number', read_only=True, allow_null=True)
 
     class Meta:
         model = Receipt
         fields = [
-            'id', 'payment', 'payment_reference', 'signatory', 'signatory_name', 'signatory_title', 'receipt_number',
-            'pilgrim_first_name', 'pilgrim_last_name', 'pilgrim_email', 'pilgrim_phone',
-            'pilgrim_passport', 'pilgrim_dob', 'pilgrim_gender',
-            'payer_name', 'payer_relationship',
-            'amount', 'payment_date',
-            'generated_by', 'generated_by_name', 'generated_at'
+            'id', 'payment', 'payment_reference', 'signatory', 'signatory_name', 'signatory_title',
+            'receipt_number', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'generated_at', 'signatory_name', 'signatory_title', 'generated_by_name', 'payment_reference', 'generated_by']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'signatory_name', 'signatory_title', 'payment_reference']
 
 
 class ReceiptListSerializer(serializers.ModelSerializer):
-    signatory_name = serializers.CharField(source='signatory.signatory_name', read_only=True)
-    generated_by_name = serializers.CharField(source='generated_by.username', read_only=True)
+    signatory_name = serializers.CharField(source='signatory.signatory_name', read_only=True, allow_null=True)
+    payment_reference = serializers.CharField(source='payment.reference_number', read_only=True, allow_null=True)
 
     class Meta:
         model = Receipt
         fields = [
-            'id', 'receipt_number', 'pilgrim_first_name', 'pilgrim_last_name',
-            'amount', 'payment_date', 'signatory_name', 'generated_by_name', 'generated_at'
+            'id', 'receipt_number', 'payment_reference', 'signatory_name', 'created_at'
         ]
-        read_only_fields = ['receipt_number', 'generated_at', 'signatory_name', 'generated_by_name']
+        read_only_fields = ['id', 'receipt_number', 'payment_reference', 'signatory_name', 'created_at']

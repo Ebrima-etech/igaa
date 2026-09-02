@@ -40,26 +40,17 @@ class TransactionAdmin(admin.ModelAdmin):
 
 @admin.register(Receipt)
 class ReceiptAdmin(admin.ModelAdmin):
-    list_display = ['receipt_number', 'pilgrim_first_name', 'pilgrim_last_name', 'amount', 'signatory', 'generated_by', 'generated_at']
-    list_filter = ['signatory', 'generated_at', 'generated_by']
-    search_fields = ['receipt_number', 'pilgrim_first_name', 'pilgrim_last_name', 'pilgrim_email']
-    readonly_fields = ['receipt_number', 'generated_at', 'generated_by']
+    list_display = ['receipt_number', 'payment', 'signatory', 'created_at']
+    list_filter = ['signatory', 'created_at']
+    search_fields = ['receipt_number', 'payment__reference_number']
+    readonly_fields = ['created_at', 'updated_at']
 
     fieldsets = (
         ('Receipt Information', {
             'fields': ('receipt_number', 'payment', 'signatory')
         }),
-        ('Pilgrim Details', {
-            'fields': ('pilgrim_first_name', 'pilgrim_last_name', 'pilgrim_email', 'pilgrim_phone', 'pilgrim_passport', 'pilgrim_dob', 'pilgrim_gender')
-        }),
-        ('Payer Details', {
-            'fields': ('payer_name', 'payer_relationship')
-        }),
-        ('Payment Details', {
-            'fields': ('amount', 'payment_date')
-        }),
-        ('Metadata', {
-            'fields': ('generated_by', 'generated_at'),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )
