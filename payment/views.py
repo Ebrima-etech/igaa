@@ -138,7 +138,6 @@ class ReceiptViewSet(viewsets.ModelViewSet):
 
             data = request.data.copy()
             receipt_number = data.get('receipt_number')
-            payment_reference = data.get('payment')  # Frontend sends payment ID as 'payment'
 
             # Check if receipt already exists
             if Receipt.objects.filter(receipt_number=receipt_number).exists():
@@ -146,23 +145,6 @@ class ReceiptViewSet(viewsets.ModelViewSet):
                     {'detail': 'Receipt with this number already exists'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-            # Convert payment ID to payment reference
-            if payment_reference:
-                try:
-                    payment = Payment.objects.get(id=payment_reference)
-                    data['payment_reference'] = payment.reference_number
-                except Payment.DoesNotExist:
-                    logger.warning(f'Payment not found for id: {payment_reference}')
-                    return Response(
-                        {'detail': 'Payment not found'},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            else:
-                data['payment_reference'] = ''
-
-            # Remove payment field if it exists
-            data.pop('payment', None)
 
             # Auto-fetch active signatory if not provided
             signatory_id = data.get('signatory')
