@@ -10,7 +10,7 @@ def create_payment_from_bank_submission(sender, instance, created, **kwargs):
     Automatically create a Payment record when bank submission is created.
     Payment has no pilgrim link yet - will be linked when GIA creates the pilgrim.
     """
-    if created and instance.status == 'pending':
+    if created and instance.status in ['pending', 'verified']:
         print(f"DEBUG: Creating Payment from BankPaymentSubmission {instance.reference_number}")
 
         # Check if payment already exists
