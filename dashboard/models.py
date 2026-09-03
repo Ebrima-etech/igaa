@@ -1,4 +1,32 @@
 from django.db import models
+from django.contrib.auth.models import User
+
+
+class Notification(models.Model):
+    TYPE_CHOICES = [
+        ('success', 'Success'),
+        ('error', 'Error'),
+        ('warning', 'Warning'),
+        ('info', 'Info'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    read = models.BooleanField(default=False)
+    action_url = models.CharField(max_length=500, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['user', 'read']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} ({self.type})"
 
 
 class HajjYear(models.Model):

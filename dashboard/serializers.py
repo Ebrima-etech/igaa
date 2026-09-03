@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DashboardReport, OperationalMetric, HajjYear
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification
 
 
 class HajjYearSerializer(serializers.ModelSerializer):
@@ -21,3 +21,10 @@ class OperationalMetricSerializer(serializers.ModelSerializer):
         model = OperationalMetric
         fields = ['id', 'metric_type', 'value', 'numeric_value', 'unit', 'timestamp']
         read_only_fields = ['timestamp']
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'type', 'title', 'message', 'read', 'action_url', 'created_at']
+        read_only_fields = ['created_at']

@@ -34,7 +34,21 @@ class PilgrimViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             logger.info(f"Pilgrim create request data: {request.data}")
-            return super().create(request, *args, **kwargs)
+            response = super().create(request, *args, **kwargs)
+
+            if response.status_code == status.HTTP_201_CREATED:
+                from dashboard.models import Notification
+                pilgrim = Pilgrim.objects.get(id=response.data.get('id'))
+
+                Notification.objects.create(
+                    user=request.user,
+                    type='success',
+                    title='Pilgrim Registered',
+                    message=f'New pilgrim {pilgrim.full_name} ({pilgrim.registration_id}) has been registered successfully.',
+                    action_url=f'/dashboard/pilgrims/{pilgrim.id}'
+                )
+
+            return response
         except Exception as e:
             logger.error(f"Error creating pilgrim: {type(e).__name__}: {str(e)}", exc_info=True)
             return Response(

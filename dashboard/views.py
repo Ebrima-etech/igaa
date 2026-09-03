@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
-from .models import DashboardReport, OperationalMetric, HajjYear
-from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification
+from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer
 from pilgrim.models import Pilgrim
 from payment.models import Payment
 from banks.models import Bank, BankPaymentSubmission
@@ -333,3 +333,22 @@ class DashboardSummaryViewSet(viewsets.ViewSet):
             'paymentStatus': payment_status_data,
             'metrics': metrics,
         })
+
+
+class NotificationViewSet(viewsets.ModelViewSet):
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return Notification.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['patch'])
+    def mark_all_as_read(self, request):
+        Notification.objects.filter(user=request.user, read=False).update(read=True)
+        return Response({'status': 'All notifications marked as read'})
+
+    @action(detail=False, methods=['get'])
+    def unread_count(self, request):
+        count = Notification.objects.filter(user=request.user, read=False).count()
+        return Response({'unread_count': count})

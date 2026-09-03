@@ -48,6 +48,24 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return PaymentListSerializer
         return PaymentSerializer
 
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+
+        if response.status_code == status.HTTP_201_CREATED:
+            from dashboard.models import Notification
+            payment = Payment.objects.get(id=response.data.get('id'))
+            pilgrim_name = payment.pilgrim.full_name if payment.pilgrim else 'Unknown Pilgrim'
+
+            Notification.objects.create(
+                user=request.user,
+                type='success',
+                title='Payment Recorded',
+                message=f'Payment of D{payment.amount} for {pilgrim_name} (Ref: {payment.reference_number}) has been recorded successfully.',
+                action_url=f'/dashboard/payments/{payment.id}'
+            )
+
+        return response
+
     @action(detail=False, methods=['get'])
     def summary(self, request):
         payments = self.get_queryset()
