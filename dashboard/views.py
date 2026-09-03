@@ -5,8 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
-from .models import DashboardReport, OperationalMetric, HajjYear, Notification
-from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatMessage, ChatGroup, GroupMessage
+from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, ChatMessageSerializer, ChatGroupSerializer, GroupMessageSerializer, UserSerializer
+from django.contrib.auth.models import User
 from pilgrim.models import Pilgrim
 from payment.models import Payment
 from banks.models import Bank, BankPaymentSubmission
@@ -352,3 +353,115 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def unread_count(self, request):
         count = Notification.objects.filter(user=request.user, read=False).count()
         return Response({'unread_count': count})
+
+
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def staff_list(self, request):
+        staff = User.objects.filter(is_staff=True)
+        serializer = self.get_serializer(staff, many=True)
+        return Response(serializer.data)
+
+
+class ChatMessageViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatMessageSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        user = self.request.user
+        return ChatMessage.objects.filter(Q(sender=user) | Q(recipient=user))
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def conversations(self, request):
+        user = request.user
+        sent = ChatMessage.objects.filter(sender=user).values('recipient').distinct()
+        received = ChatMessage.objects.filter(recipient=user).values('sender')
+
+        user_ids = set()
+        for item in sent:
+            user_ids.add(item['recipient'])
+        for item in received:
+            user_ids.add(item['sender'])
+
+        users = User.objects.filter(id__in=user_ids)
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def with_user(self, request):
+        other_user_id = request.query_params.get('user_id')
+        if not other_user_id:
+            return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        messages = ChatMessage.objects.filter(
+            Q(sender=request.user, recipient_id=other_user_id) |
+            Q(sender_id=other_user_id, recipient=request.user)
+        ).order_by('created_at')
+
+        ChatMessage.objects.filter(recipient=request.user, sender_id=other_user_id).update(read=True)
+
+        serializer = self.get_serializer(messages, many=True)
+        return Response(serializer.data)
+
+
+class ChatGroupViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatGroupSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return ChatGroup.objects.filter(members=self.request.user)
+
+    def perform_create(self, serializer):
+        group = serializer.save(created_by=self.request.user)
+        group.members.add(self.request.user)
+
+    @action(detail=True, methods=['post'])
+    def add_member(self, request, pk=None):
+        group = self.get_object()
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=user_id)
+        group.members.add(user)
+        return Response({'status': 'Member added'})
+
+    @action(detail=True, methods=['post'])
+    def remove_member(self, request, pk=None):
+        group = self.get_object()
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.get(id=user_id)
+        group.members.remove(user)
+        return Response({'status': 'Member removed'})
+
+
+class GroupMessageViewSet(viewsets.ModelViewSet):
+    serializer_class = GroupMessageSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return GroupMessage.objects.filter(group__members=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(sender=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        group_id = request.query_params.get('group_id')
+        if group_id:
+            queryset = self.get_queryset().filter(group_id=group_id)
+            serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        return super().list(request, *args, **kwargs)

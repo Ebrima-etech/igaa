@@ -120,3 +120,52 @@ class OperationalMetric(models.Model):
 
     def __str__(self):
         return f"{self.get_metric_type_display()}: {self.value}"
+
+
+class ChatMessage(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    message = models.TextField()
+    read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['sender', 'recipient', '-created_at']),
+            models.Index(fields=['recipient', 'read']),
+        ]
+
+    def __str__(self):
+        return f"{self.sender.username} -> {self.recipient.username}: {self.message[:50]}"
+
+
+class ChatGroup(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_groups')
+    members = models.ManyToManyField(User, related_name='chat_groups')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name
+
+
+class GroupMessage(models.Model):
+    group = models.ForeignKey(ChatGroup, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_messages')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['group', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.sender.username} in {self.group.name}: {self.message[:50]}"
