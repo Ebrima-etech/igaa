@@ -76,10 +76,14 @@ def send_payment_notification(payment_id: int):
 
         html_message = render_to_string('emails/payment_notification.html', context)
 
+        # Use EMAIL_HOST_USER instead of custom email_from to match Gmail authentication
+        from django.conf import settings as django_settings
+        from_email = django_settings.EMAIL_HOST_USER or settings.email_from
+
         send_mail(
             subject=f"{settings.email_subject} - Payment Received",
             message=f"Payment received for {context['pilgrim_name']}: {payment.amount}",
-            from_email=settings.email_from,
+            from_email=from_email,
             recipient_list=recipients,
             html_message=html_message,
             fail_silently=False,
@@ -101,6 +105,7 @@ def send_receipt_notification(receipt_id: int):
 
     try:
         from igaa_project.models import Receipt
+        from django.conf import settings as django_settings
 
         receipt = Receipt.objects.get(id=receipt_id)
         settings = EmailNotificationSettings.get_settings()
@@ -119,10 +124,13 @@ def send_receipt_notification(receipt_id: int):
 
         html_message = render_to_string('emails/receipt_notification.html', context)
 
+        # Use EMAIL_HOST_USER instead of custom email_from to match Gmail authentication
+        from_email = django_settings.EMAIL_HOST_USER or settings.email_from
+
         send_mail(
             subject=f"{settings.email_subject} - Receipt Generated",
             message=f"Receipt generated: {receipt.receipt_number}",
-            from_email=settings.email_from,
+            from_email=from_email,
             recipient_list=recipients,
             html_message=html_message,
             fail_silently=False,
@@ -139,12 +147,17 @@ def send_receipt_notification(receipt_id: int):
 def send_test_email(recipient_email: str) -> bool:
     """Send a test email to verify configuration"""
     try:
+        from django.conf import settings as django_settings
+
         settings = EmailNotificationSettings.get_settings()
+
+        # Use EMAIL_HOST_USER instead of custom email_from to match Gmail authentication
+        from_email = django_settings.EMAIL_HOST_USER or settings.email_from
 
         send_mail(
             subject=f"Test Email - {settings.email_subject}",
             message="This is a test email to verify the Gmail configuration is working correctly.",
-            from_email=settings.email_from,
+            from_email=from_email,
             recipient_list=[recipient_email],
             html_message="""
             <html>
