@@ -4,8 +4,8 @@
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
-from celery import shared_task
 import logging
+from time import sleep
 
 from settings_app.models import EmailNotification, EmailNotificationSettings
 
@@ -48,10 +48,10 @@ def get_active_recipients() -> list:
         return []
 
 
-@shared_task
 def send_payment_notification(payment_id: int):
-    """Send email notification for new payment"""
+    """Send email notification for new payment (synchronous)"""
     if not should_send_notification('payment'):
+        logger.info(f'Payment notifications disabled, skipping for payment {payment_id}')
         return False
 
     try:
@@ -93,10 +93,10 @@ def send_payment_notification(payment_id: int):
         return False
 
 
-@shared_task
 def send_receipt_notification(receipt_id: int):
-    """Send email notification for new receipt"""
+    """Send email notification for new receipt (synchronous)"""
     if not should_send_notification('receipt'):
+        logger.info(f'Receipt notifications disabled, skipping for receipt {receipt_id}')
         return False
 
     try:

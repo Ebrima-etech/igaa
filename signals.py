@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Payment)
 def handle_payment_created(sender, instance, created, **kwargs):
-    """Trigger email notification when payment is created"""
+    """Trigger email notification when payment is created (synchronous)"""
     if created:
         try:
             if not send_payment_notification:
@@ -32,18 +32,21 @@ def handle_payment_created(sender, instance, created, **kwargs):
 
             settings = EmailNotificationSettings.get_settings()
             if settings.notify_on_payment:
-                logger.info(f'Payment created: {instance.id}. Queuing notification.')
+                logger.info(f'Payment created: {instance.id}. Sending notification.')
 
                 # Apply delay if configured
                 if settings.notification_delay > 0:
-                    send_payment_notification.apply_async(
-                        args=[instance.id],
-                        countdown=settings.notification_delay * 60  # Convert minutes to seconds
-                    )
-                    logger.info(f'Payment notification scheduled with {settings.notification_delay} minute delay')
+                    from time import sleep
+                    delay_seconds = settings.notification_delay * 60
+                    logger.info(f'Delaying notification by {settings.notification_delay} minutes')
+                    sleep(delay_seconds)
+
+                # Send email synchronously
+                result = send_payment_notification(instance.id)
+                if result:
+                    logger.info(f'✓ Payment notification sent successfully for payment {instance.id}')
                 else:
-                    send_payment_notification.delay(instance.id)
-                    logger.info('Payment notification queued for immediate sending')
+                    logger.warning(f'Payment notification failed for payment {instance.id}')
             else:
                 logger.info('Payment notifications disabled, skipping notification')
 
