@@ -9,10 +9,10 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender='payment.Payment')
 def send_email_on_payment_created(sender, instance, created, **kwargs):
     """Send email notification when payment is created"""
-    logger.info(f'✓ Payment signal FIRED: payment {instance.id}, created={created}')
+    logger.warning(f'🔔 SIGNAL FIRED: payment_id={instance.id}, created={created}, reference={instance.reference_number}')
 
     if not created:
-        logger.info(f'Payment {instance.id} was updated, not created. Skipping.')
+        logger.warning(f'Payment {instance.id} was updated (not created). Skipping email.')
         return
 
     try:
