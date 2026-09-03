@@ -56,6 +56,7 @@ def send_payment_notification(payment_id: int):
 
     try:
         from payment.models import Payment
+        from banks.models import BankPaymentSubmission
 
         payment = Payment.objects.get(id=payment_id)
         settings = EmailNotificationSettings.get_settings()
@@ -65,6 +66,14 @@ def send_payment_notification(payment_id: int):
             logger.warning(f'No active recipients for payment notification {payment_id}')
             return False
 
+        # Get BankPaymentSubmission ID to build link to payment details
+        payment_url = "#"
+        try:
+            submission = BankPaymentSubmission.objects.get(reference_number=payment.reference_number)
+            payment_url = f"https://iga-blush.vercel.app/dashboard/payments/{submission.id}"
+        except BankPaymentSubmission.DoesNotExist:
+            logger.warning(f'BankPaymentSubmission not found for reference {payment.reference_number}')
+
         context = {
             'payment': payment,
             'pilgrim_name': getattr(payment.pilgrim, 'full_name', 'Unknown') if hasattr(payment, 'pilgrim') else 'Unknown',
@@ -72,6 +81,7 @@ def send_payment_notification(payment_id: int):
             'reference': payment.reference_number,
             'date': payment.created_at,  # Use created_at (DateTime) instead of payment_date (Date)
             'status': payment.status,
+            'payment_url': payment_url,
         }
 
         html_message = render_to_string('emails/payment_notification.html', context)
