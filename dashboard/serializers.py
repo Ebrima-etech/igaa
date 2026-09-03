@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatMessage, ChatGroup, GroupMessage
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification
 from django.contrib.auth.models import User
 
 
@@ -37,30 +37,3 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
 
 
-class ChatMessageSerializer(serializers.ModelSerializer):
-    sender_username = serializers.CharField(source='sender.username', read_only=True)
-    recipient_username = serializers.CharField(source='recipient.username', read_only=True)
-
-    class Meta:
-        model = ChatMessage
-        fields = ['id', 'sender', 'sender_username', 'recipient', 'recipient_username', 'message', 'read', 'created_at']
-        read_only_fields = ['created_at', 'sender', 'sender_username', 'recipient_username']
-
-
-class GroupMessageSerializer(serializers.ModelSerializer):
-    sender_username = serializers.CharField(source='sender.username', read_only=True)
-
-    class Meta:
-        model = GroupMessage
-        fields = ['id', 'group', 'sender', 'sender_username', 'message', 'created_at']
-        read_only_fields = ['created_at', 'sender', 'sender_username']
-
-
-class ChatGroupSerializer(serializers.ModelSerializer):
-    members_data = UserSerializer(source='members', many=True, read_only=True)
-    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
-
-    class Meta:
-        model = ChatGroup
-        fields = ['id', 'name', 'description', 'created_by', 'created_by_username', 'members', 'members_data', 'created_at', 'updated_at']
-        read_only_fields = ['created_at', 'updated_at', 'created_by', 'created_by_username']
