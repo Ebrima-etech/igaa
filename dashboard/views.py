@@ -362,8 +362,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def staff_list(self, request):
-        staff = User.objects.filter(is_staff=True)
-        serializer = self.get_serializer(staff, many=True)
+        users = User.objects.all()
+        serializer = self.get_serializer(users, many=True)
         return Response(serializer.data)
 
 
