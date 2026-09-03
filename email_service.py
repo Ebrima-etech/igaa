@@ -70,7 +70,7 @@ def send_payment_notification(payment_id: int):
             'pilgrim_name': getattr(payment.pilgrim, 'full_name', 'Unknown') if hasattr(payment, 'pilgrim') else 'Unknown',
             'amount': payment.amount,
             'reference': payment.reference_number,
-            'date': payment.payment_date,
+            'date': payment.created_at,  # Use created_at (DateTime) instead of payment_date (Date)
             'status': payment.status,
         }
 
