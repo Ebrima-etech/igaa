@@ -116,7 +116,17 @@ class CurrencySettingsView(APIView):
                     )
 
                 rate = currency.get('rate')
-                if not isinstance(rate, (int, float)):
+                # Convert string to float if needed
+                if isinstance(rate, str):
+                    try:
+                        rate = float(rate)
+                        currency['rate'] = rate
+                    except (ValueError, TypeError):
+                        return Response(
+                            {'detail': f'Rate for {code} must be a valid number, got "{rate}"'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                elif not isinstance(rate, (int, float)):
                     return Response(
                         {'detail': f'Rate for {code} must be a number, got {type(rate).__name__}'},
                         status=status.HTTP_400_BAD_REQUEST
