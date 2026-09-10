@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DashboardReport, OperationalMetric, HajjYear
+from .models import DashboardReport, OperationalMetric, HajjYear, ChatBroadcast
 
 
 @admin.register(HajjYear)
@@ -38,3 +38,11 @@ class OperationalMetricAdmin(admin.ModelAdmin):
     list_display = ['metric_type', 'value', 'unit', 'timestamp']
     list_filter = ['metric_type', 'timestamp']
     readonly_fields = ['timestamp']
+
+
+@admin.register(ChatBroadcast)
+class ChatBroadcastAdmin(admin.ModelAdmin):
+    list_display = ['user', 'message', 'created_at']
+    list_filter = ['created_at', 'user']
+    search_fields = ['message', 'user__username']
+    readonly_fields = ['created_at', 'updated_at']

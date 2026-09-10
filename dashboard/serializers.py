@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import DashboardReport, OperationalMetric, HajjYear, Notification
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatBroadcast
 from django.contrib.auth.models import User
 
 
@@ -35,5 +35,15 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email']
+
+
+class ChatBroadcastSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+
+    class Meta:
+        model = ChatBroadcast
+        fields = ['id', 'user_id', 'username', 'message', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'user_id', 'username']
 
 

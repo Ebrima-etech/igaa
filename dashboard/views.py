@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
-from .models import DashboardReport, OperationalMetric, HajjYear, Notification
-from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, UserSerializer
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatBroadcast
+from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, UserSerializer, ChatBroadcastSerializer
 from django.contrib.auth.models import User
 from pilgrim.models import Pilgrim
 from payment.models import Payment
@@ -364,6 +364,25 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def staff_list(self, request):
         users = User.objects.all()
         serializer = self.get_serializer(users, many=True)
+        return Response(serializer.data)
+
+
+class ChatBroadcastViewSet(viewsets.ModelViewSet):
+    serializer_class = ChatBroadcastSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        return ChatBroadcast.objects.all().order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['get'])
+    def recent(self, request):
+        limit = int(request.query_params.get('limit', 50))
+        messages = self.get_queryset()[:limit]
+        serializer = self.get_serializer(messages, many=True)
         return Response(serializer.data)
 
 

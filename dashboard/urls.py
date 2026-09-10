@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     DashboardReportViewSet, OperationalMetricViewSet, DashboardSummaryViewSet, HajjYearViewSet,
-    NotificationViewSet, UserViewSet
+    NotificationViewSet, UserViewSet, ChatBroadcastViewSet
 )
 
 router = DefaultRouter()
@@ -11,6 +11,7 @@ router.register(r'dashboard-reports', DashboardReportViewSet)
 router.register(r'operational-metrics', OperationalMetricViewSet)
 router.register(r'notifications', NotificationViewSet, basename='notifications')
 router.register(r'users', UserViewSet, basename='users')
+router.register(r'chat-broadcasts', ChatBroadcastViewSet, basename='chat-broadcasts')
 router.register(r'dashboard/summary', DashboardSummaryViewSet, basename='dashboard-summary')
 
 urlpatterns = [
