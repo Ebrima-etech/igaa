@@ -18,6 +18,43 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
+    def update(self, request, *args, **kwargs):
+        """Override update to handle password hashing"""
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+
+        # Handle password specially
+        if 'password' in request.data and request.data['password']:
+            instance.set_password(request.data['password'])
+            request.data = request.data.copy()
+            request.data.pop('password')
+
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if 'password' in request.data or getattr(instance, '_password_changed', False):
+            instance.save()
+
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reset_password(self, request, pk=None):
+        """Reset user password"""
+        user = self.get_object()
+        password = request.data.get('password')
+
+        if not password:
+            return Response({'error': 'Password is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(password) < 6:
+            return Response({'error': 'Password must be at least 6 characters'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.set_password(password)
+        user.save()
+
+        return Response({'detail': f'Password reset successfully for {user.username}'}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['get'])
     def me(self, request):
         serializer = self.get_serializer(request.user)
