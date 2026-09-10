@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
-from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatBroadcast
-from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, UserSerializer, ChatBroadcastSerializer
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatBroadcast, ChatMessage
+from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, UserSerializer, ChatBroadcastSerializer, ChatMessageSerializer
 from django.contrib.auth.models import User
 from pilgrim.models import Pilgrim
 from payment.models import Payment
@@ -384,5 +384,56 @@ class ChatBroadcastViewSet(viewsets.ModelViewSet):
         messages = self.get_queryset()[:limit]
         serializer = self.get_serializer(messages, many=True)
         return Response(serializer.data)
+
+
+class ChatMessageViewSet(viewsets.ModelViewSet):
+    """ViewSet for peer-to-peer chat messages (like WhatsApp)"""
+    serializer_class = ChatMessageSerializer
+    permission_classes = [IsAuthenticated]
+    ordering = ['-created_at']
+
+    def get_queryset(self):
+        """Get messages between current user and another user"""
+        user_id = self.request.query_params.get('user_id')
+        recipient_id = self.request.query_params.get('recipient_id')
+
+        if user_id and recipient_id:
+            # Get all messages between these two users (both directions)
+            return ChatMessage.objects.filter(
+                Q(user_id=user_id, recipient_id=recipient_id) |
+                Q(user_id=recipient_id, recipient_id=user_id)
+            ).order_by('-created_at')
+
+        return ChatMessage.objects.none()
+
+    def perform_create(self, serializer):
+        """Set sender to current user"""
+        serializer.save(user=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        """Override create to validate recipient_id"""
+        recipient_id = request.data.get('recipient_id')
+
+        if not recipient_id:
+            return Response(
+                {'detail': 'recipient_id is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if int(recipient_id) == request.user.id:
+            return Response(
+                {'detail': 'Cannot send message to yourself'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            User.objects.get(id=recipient_id)
+        except User.DoesNotExist:
+            return Response(
+                {'detail': 'Recipient user not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        return super().create(request, *args, **kwargs)
 
 

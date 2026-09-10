@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DashboardReport, OperationalMetric, HajjYear, ChatBroadcast
+from .models import DashboardReport, OperationalMetric, HajjYear, ChatBroadcast, ChatMessage
 
 
 @admin.register(HajjYear)
@@ -46,3 +46,20 @@ class ChatBroadcastAdmin(admin.ModelAdmin):
     list_filter = ['created_at', 'user']
     search_fields = ['message', 'user__username']
     readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ['user', 'recipient', 'message', 'created_at']
+    list_filter = ['created_at', 'user', 'recipient']
+    search_fields = ['message', 'user__username', 'recipient__username']
+    readonly_fields = ['created_at', 'updated_at']
+    fieldsets = (
+        ('Message Info', {
+            'fields': ('user', 'recipient', 'message')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
