@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from datetime import timedelta, datetime
-from .models import DashboardReport, OperationalMetric, HajjYear, Notification, ChatMessage, ChatGroup, GroupMessage
-from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, ChatMessageSerializer, ChatGroupSerializer, GroupMessageSerializer, UserSerializer
+from .models import DashboardReport, OperationalMetric, HajjYear, Notification
+from .serializers import DashboardReportSerializer, OperationalMetricSerializer, HajjYearSerializer, NotificationSerializer, UserSerializer
 from django.contrib.auth.models import User
 from pilgrim.models import Pilgrim
 from payment.models import Payment

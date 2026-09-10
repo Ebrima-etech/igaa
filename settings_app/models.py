@@ -16,7 +16,6 @@ class CurrencySettings(models.Model):
 
     MODE_CHOICES = [
         ('manual', 'Manual - Admin configured rates'),
-        ('realtime', 'Real-Time - API-based rates'),
     ]
 
     user = models.OneToOneField(
@@ -40,7 +39,7 @@ class CurrencySettings(models.Model):
         max_length=20,
         choices=MODE_CHOICES,
         default='manual',
-        help_text='Currency rate mode (manual or realtime)'
+        help_text='Currency rate mode'
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
